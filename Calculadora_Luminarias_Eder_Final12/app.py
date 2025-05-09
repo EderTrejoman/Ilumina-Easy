@@ -82,10 +82,10 @@ st.header("2. Dimensiones del área")
 longitud = st.number_input("Longitud del área (m)", min_value=1.0, step=0.5)
 ancho = st.number_input("Ancho del área (m)", min_value=1.0, step=0.5)
 altura_montaje = st.number_input("Altura de montaje (m)", min_value=1.0, step=0.1)
-st.image("altura-colgantes-scaled.jpeg", caption="Altura de montaje: lámparas colgantes")
+st.markdown("**Nota:** La altura de montaje es la distancia desde el piso hasta la luminaria.")
 
 altura_plano_trabajo = st.number_input("Altura del plano de trabajo (m)", min_value=0.5, value=0.75, step=0.05)
-st.image("hola.png", caption="Altura del plano de trabajo")
+st.markdown("**Nota:** Es la altura donde se realiza la tarea visual, como una mesa de trabajo (0.75 m típicamente).")
 area = longitud * ancho
 
 st.header("3. Parámetros de luminaria")
@@ -146,6 +146,7 @@ datos_export = {
     "Altura plano trabajo": altura_plano_trabajo,
     **resultado
 }
+
 df = pd.DataFrame(list(datos_export.items()), columns=["Parámetro", "Valor"])
 excel_buffer = io.BytesIO()
 df.to_excel(excel_buffer, index=False, engine="openpyxl")
