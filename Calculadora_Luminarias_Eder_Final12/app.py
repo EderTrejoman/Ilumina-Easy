@@ -1,4 +1,3 @@
-
 # Autor: Eder Helio Martínez Trejo
 # Proyecto: Calculadora de luminarias basada en la NOM-025-STPS-2008
 # Derechos reservados © 2025. Prohibida su reproducción sin autorización del autor.
@@ -61,7 +60,7 @@ def graficar_spacing(longitud, ancho, spacing_x, spacing_y):
     return total
 
 st.title("Calculadora de Luminarias - NOM-025-STPS-2008")
-st.markdown("Calcula el número de luminarias o los lux proporcionados en un espacio conforme a la norma.")
+st.markdown("Calcula el número de luminarias o los lux proporcionados en un espacio conforme a la norma. Puedes ajustar parámetros técnicos como CU, MF y reflectancia para mayor precisión.")
 
 lux_dict = {
     "Patios, estacionamientos, exteriores generales": 20,
@@ -84,6 +83,7 @@ longitud = st.number_input("Longitud del área (m)", min_value=1.0, step=0.5)
 ancho = st.number_input("Ancho del área (m)", min_value=1.0, step=0.5)
 altura_montaje = st.number_input("Altura de montaje (m)", min_value=1.0, step=0.1)
 st.image("altura-colgantes-scaled.jpeg", caption="Altura de montaje: lámparas colgantes")
+
 altura_plano_trabajo = st.number_input("Altura del plano de trabajo (m)", min_value=0.5, value=0.75, step=0.05)
 st.image("hola.png", caption="Altura del plano de trabajo")
 area = longitud * ancho
@@ -150,6 +150,7 @@ df = pd.DataFrame(list(datos_export.items()), columns=["Parámetro", "Valor"])
 excel_buffer = io.BytesIO()
 df.to_excel(excel_buffer, index=False, engine="openpyxl")
 excel_buffer.seek(0)
+
 st.download_button("📥 Descargar como Excel", data=excel_buffer, file_name="resultado_luminarias.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 pdf_buffer = exportar_pdf(datos_export)
 st.download_button("📥 Descargar como PDF", data=pdf_buffer, file_name="resultado_luminarias.pdf", mime="application/pdf")
