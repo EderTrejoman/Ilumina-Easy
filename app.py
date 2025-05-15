@@ -1,4 +1,3 @@
-
 # Autor: Eder Helio Martinez Trejo
 import streamlit as st
 import numpy as np
@@ -6,27 +5,6 @@ import matplotlib.pyplot as plt
 import json
 
 st.set_page_config(page_title="Calculadora de Luminarias NOM-025 + Conelec")
-
-
----
-
-- El número de luminarias necesarias en un área
-- El nivel de lux resultante de una instalación existente
-- El **CU (Coeficiente de Utilización)** a partir del **RCR (Índice de Cavidad del Recinto)**
-- El impacto de las **reflectancias del techo, paredes y piso**
-
----
-
-### ℹ️ Sobre las Reflectancias
-
-Las reflectancias tienen un gran impacto en el rendimiento del sistema de iluminación. Aquí te mostramos una tabla orientativa basada en materiales típicos:
-
-- - Si usas valores altos (ej. 0.8), estás simulando un recinto muy reflectante.
-- - Si los valores son bajos (ej. 0.3), simulas un recinto oscuro, lo cual puede bajar el CU.
-- - **Consejo:** Usa valores representativos del acabado real del lugar.
-
----
-
 
 with open("luminarias_conelec_15_COMPLETAS.json", "r", encoding="utf-8") as f:
     luminarias = json.load(f)
@@ -50,8 +28,24 @@ hfc = hcc - hrc
 st.markdown(f"**Altura entre luminaria y plano de trabajo (hfc):** `{hfc:.2f} cm`")
 
 st.header("3️⃣ Reflectancias del recinto")
+
 st.markdown("""
 ### 📊 Tabla orientativa de reflectancias
+
+| Elemento  | Tipo de superficie               | Reflectancia típica (ρ) |
+|-----------|----------------------------------|--------------------------|
+| Techo     | Pintura blanca, yeso             | 0.7 - 0.9                |
+| Paredes   | Pintura clara, superficies lisas | 0.5 - 0.7                |
+| Piso      | Madera, loseta, concreto pulido  | 0.2 - 0.4                |
+
+- Si usas valores altos (ej. 0.8), estás simulando un recinto muy reflectante.  
+- Si los valores son bajos (ej. 0.3), simulas un recinto oscuro, lo cual puede bajar el CU.  
+- **Consejo:** Usa valores representativos del acabado real del lugar.
+""")
+
+pcc = st.slider("Reflectancia del techo (ρcc)", 0.1, 0.9, 0.7, step=0.05)
+ppp = st.slider("Reflectancia de paredes (ρpp)", 0.1, 0.9, 0.5, step=0.05)
+pcf = st.slider("Reflectancia del piso (ρcf)", 0.1, 0.5, 0.2, step=0.05)
 
 st.header("4️⃣ Tipo de Área según la NOM-025")
 tipo_area = st.selectbox("Selecciona el tipo de área:", [a["area"] for a in areas])
