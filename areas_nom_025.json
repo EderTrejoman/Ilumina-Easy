@@ -1,0 +1,38 @@
+[
+  {
+    "area": "Exteriores generales",
+    "lux_recomendado": 20
+  },
+  {
+    "area": "Interiores generales (pasillos, almacenes)",
+    "lux_recomendado": 50
+  },
+  {
+    "area": "\u00c1reas de circulaci\u00f3n",
+    "lux_recomendado": 100
+  },
+  {
+    "area": "Servicios al personal",
+    "lux_recomendado": 200
+  },
+  {
+    "area": "Talleres / aulas / oficinas",
+    "lux_recomendado": 300
+  },
+  {
+    "area": "Talleres de precisi\u00f3n / dibujo",
+    "lux_recomendado": 500
+  },
+  {
+    "area": "Tareas de detalle fino",
+    "lux_recomendado": 750
+  },
+  {
+    "area": "Alta exactitud (inspecci\u00f3n compleja)",
+    "lux_recomendado": 1000
+  },
+  {
+    "area": "Gran exactitud (procesos exigentes)",
+    "lux_recomendado": 2000
+  }
+]

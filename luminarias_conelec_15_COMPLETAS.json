@@ -1,0 +1,77 @@
+[
+  {
+    "nombre": "Luminaria fluorescente empotrada con difusor (4\u00d740 W)",
+    "tipo": "Difusor",
+    "flujoLuminoso": 11200
+  },
+  {
+    "nombre": "Campana industrial semiabierta (l\u00e1mpara VM 250 W)",
+    "tipo": "Campana",
+    "flujoLuminoso": 12500
+  },
+  {
+    "nombre": "Campana ventilada de porcelana esmaltada (bajas alturas, l\u00e1mpara VM 400 W f\u00f3sforo)",
+    "tipo": "Campana",
+    "flujoLuminoso": 21000
+  },
+  {
+    "nombre": "Campana ventilada de aluminio 450 mm (gran altura, haz medio, l\u00e1mpara VM 400 W f\u00f3sforo)",
+    "tipo": "Campana",
+    "flujoLuminoso": 21000
+  },
+  {
+    "nombre": "Reflector industrial de haz concentrado (l\u00e1mpara VM 400 W clara)",
+    "tipo": "Reflector",
+    "flujoLuminoso": 22000
+  },
+  {
+    "nombre": "Campana ventilada de porcelana esmaltada 675 mm (gran altura, l\u00e1mpara VM 1000 W f\u00f3sforo)",
+    "tipo": "Campana",
+    "flujoLuminoso": 54000
+  },
+  {
+    "nombre": "Campana industrial cerrada con difusor prism\u00e1tico (l\u00e1mpara de mercurio 250 W)",
+    "tipo": "Campana",
+    "flujoLuminoso": 12500
+  },
+  {
+    "nombre": "Difusor opalino suspendido (l\u00e1mpara fluorescente 2x40 W)",
+    "tipo": "Difusor",
+    "flujoLuminoso": 6800
+  },
+  {
+    "nombre": "Reflector tipo pantalla blanca (VM 400 W)",
+    "tipo": "Reflector",
+    "flujoLuminoso": 21000
+  },
+  {
+    "nombre": "Reflector tipo R-57 (haz estrecho)",
+    "tipo": "Reflector",
+    "flujoLuminoso": 8200
+  },
+  {
+    "nombre": "Reflector tipo R-52 (haz ancho)",
+    "tipo": "Reflector",
+    "flujoLuminoso": 8900
+  },
+  {
+    "nombre": "Difusor tipo V",
+    "tipo": "Difusor",
+    "flujoLuminoso": 6200
+  },
+  {
+    "nombre": "Difusor con pantalla blanca",
+    "tipo": "Difusor",
+    "flujoLuminoso": 5800
+  },
+  {
+    "nombre": "Reflector campana alta (CDH)",
+    "tipo": "Reflector",
+    "flujoLuminoso": 10500
+  },
+  {
+    "nombre": "Luminaria tipo pantalla opalina suspendida con l\u00e1mpara fluorescente",
+    "tipo": "Difusor",
+    "flujoLuminoso": 7200
+  }
+]
