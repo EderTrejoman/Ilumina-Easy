@@ -101,34 +101,28 @@ if flujo > 0 and area > 0 and lux_requerido > 0:
 else:
     st.info("Introduce todos los datos para calcular el número de luminarias.")
 
-st.subheader("📚 Tablas de apoyo (según método cavidad zonal)")
+st.subheader("📚 Tabla de factor de mantenimiento (FM) por color")
 st.markdown("""
-**Tabla de reflectancias típicas:**
+<style>
+.red   { background-color: #ffcccc; padding: 4px; }
+.orange { background-color: #ffe5cc; padding: 4px; }
+.yellow { background-color: #ffffcc; padding: 4px; }
+.green  { background-color: #e6ffcc; padding: 4px; }
+</style>
 
-| Superficie | Acabado              | Reflectancia |
-|------------|-----------------------|--------------|
-| Techo      | Blanco / muy claro    | 0.7          |
-| Techo      | Claro                 | 0.5          |
-| Techo      | Medio                 | 0.3          |
-| Paredes    | Claro                 | 0.5          |
-| Paredes    | Medio                 | 0.3          |
-| Paredes    | Oscuro                | 0.1          |
-| Suelo      | Claro                 | 0.3          |
-| Suelo      | Oscuro                | 0.1          |
-
-**Tabla de factor de mantenimiento (FM) extendida:**
-
-| Tipo de Ambiente                   | FM sugerido |
-|------------------------------------|-------------|
-| Limpio (oficinas, laboratorios)    | 0.8         |
-| Polvoriento o uso moderado         | 0.7         |
-| Industria ligera/agresiva          | 0.6         |
-| Poco mantenimiento o corrosivo     | 0.5         |
-""")
+<table>
+<tr><th>Tipo de ambiente</th><th class='green'>FM sugerido</th></tr>
+<tr><td class='green'>Ambiente limpio (oficinas, laboratorios)</td><td class='green'>0.8</td></tr>
+<tr><td class='yellow'>Moderadamente sucio (uso general, almacenes)</td><td class='yellow'>0.7</td></tr>
+<tr><td class='orange'>Industrial ligero/agresivo</td><td class='orange'>0.6</td></tr>
+<tr><td class='red'>Ambiente severo / mantenimiento deficiente</td><td class='red'>0.5</td></tr>
+</table>
+""", unsafe_allow_html=True)
 
 st.subheader("🌐 Enlaces de referencia externa")
 st.markdown("""
 - [📄 Tabla de factor de mantenimiento - La Pantalla](https://www.la-pantalla.com.ar/tabla-de-factor-de-mantenimiento-iluminacion/)
 - [📘 NOM-025-STPS-2008 - Diario Oficial de la Federación](https://www.dof.gob.mx/normasOficiales/3275/stps/stps.htm)
-- [📊 Manual Conelec (PDF)](https://kupdf.net/download/manuel-electrico-conelecpdf_5964e7bcdc0d6051532be324_pdf)
 """)
+
+
