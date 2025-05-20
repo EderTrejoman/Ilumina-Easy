@@ -23,11 +23,25 @@ Facilitar el cálculo del número de luminarias necesarias para un recinto, cons
 - Parámetros definidos por la NOM-025-STPS-2008.
 
 ---
+
+### 📌 ¿Qué es el Coeficiente de Utilización (CU)?
+El **CU** representa qué tanto del flujo luminoso emitido por una luminaria llega efectivamente al plano de trabajo. Este valor depende del diseño de la luminaria, las dimensiones del recinto, el **RCR (Índice de Cavidad del Recinto)** y las **reflectancias** del techo, paredes y piso.
+
+Valores más altos de CU indican una mejor eficiencia en la distribución de la luz. Se obtiene de catálogos técnicos o tablas normalizadas, pero también puede estimarse.
+
+### 📌 ¿Qué es el Factor de Mantenimiento (FM)?
+El **FM** tiene en cuenta la pérdida de luz con el tiempo debido a la acumulación de polvo en luminarias, reducción del rendimiento de las lámparas, y condiciones ambientales.
+
+- En ambientes limpios se usa típicamente **0.8**.
+- En ambientes sucios o con poco mantenimiento, se recomienda **0.6** o menos.
+
+El FM se aplica para garantizar que aún con el paso del tiempo, la iluminación mínima exigida por la norma se mantenga.
+
+---
 """)
 
 uploaded_file = st.file_uploader("📥 Sube tu archivo .IES para extraer el flujo luminoso", type=["ies"])
 
-# Función para extraer flujo luminoso desde el .IES
 def extraer_flujo_luminoso(archivo):
     contenido = archivo.read().decode("latin1").splitlines()
     for linea in contenido:
@@ -43,49 +57,52 @@ def extraer_flujo_luminoso(archivo):
     except:
         return None
 
-flujo = None
-if uploaded_file:
-    flujo_extraido = extraer_flujo_luminoso(uploaded_file)
-    if flujo_extraido:
-        st.success(f"✅ Flujo luminoso extraído: {flujo_extraido} lm")
-        flujo = flujo_extraido
-    else:
-        st.warning("⚠️ No se pudo extraer el flujo. Introduce manualmente:")
-        flujo = st.number_input("Flujo luminoso (lm)", min_value=0.0)
+flujo = extraer_flujo_luminoso(uploaded_file) if uploaded_file else None
+if flujo:
+    st.success(f"✅ Flujo luminoso extraído: {flujo} lm")
 else:
     flujo = st.number_input("Flujo luminoso (lm)", min_value=0.0)
 
-# Parámetros físicos
 st.subheader("📐 Parámetros del recinto")
 largo = st.number_input("Largo del recinto (m)", min_value=0.0)
 ancho = st.number_input("Ancho del recinto (m)", min_value=0.0)
 area = largo * ancho
 st.markdown(f"**Área calculada automáticamente:** `{area:.2f} m²`")
 
-altura_total = st.number_input("Altura del recinto (m)", min_value=0.0)
 h_montaje = st.number_input("Altura de montaje de la luminaria (m)", min_value=0.0)
 h_trabajo = st.number_input("Altura del plano de trabajo (m)", min_value=0.0, value=0.8)
-
-# Cálculo del RCR
-h_efectiva = altura_total - h_montaje - h_trabajo
+h_efectiva = h_montaje - h_trabajo
 rcr = 0
 if h_efectiva > 0 and largo > 0 and ancho > 0:
     rcr = round(5 * (largo + ancho) / (largo * ancho) * h_efectiva, 2)
 st.markdown(f"**Índice de Cavidad del Recinto (RCR):** `{rcr}`")
 
-# Reflectancias
 st.subheader("🎨 Reflectancias del recinto")
-reflectancia_techo = st.selectbox("Reflectancia del techo (ρcc)", [0.2, 0.5, 0.7, 0.8], index=2)
-reflectancia_paredes = st.selectbox("Reflectancia de las paredes (ρpp)", [0.2, 0.5, 0.7, 0.8], index=1)
-reflectancia_piso = st.selectbox("Reflectancia del piso (ρcf)", [0.1, 0.2, 0.3, 0.4], index=1)
+reflectancia_techo = st.number_input("Reflectancia del techo (ρcc)", min_value=0.0, max_value=1.0, value=0.7)
+reflectancia_paredes = st.number_input("Reflectancia de las paredes (ρpp)", min_value=0.0, max_value=1.0, value=0.5)
+reflectancia_piso = st.number_input("Reflectancia del piso (ρcf)", min_value=0.0, max_value=1.0, value=0.2)
 
-# CU manual
 st.subheader("🔢 Parámetros de cálculo")
 cu = st.number_input("Coeficiente de Utilización (CU)", min_value=0.01, max_value=1.0, value=0.6)
-lux_requerido = st.number_input("Nivel de iluminancia requerido (lux)", min_value=0.0, value=300.0)
+
+niveles_nom = {
+    "Oficinas (actividades de lectura/escritura)": 300,
+    "Áreas de tránsito o exteriores": 100,
+    "Áreas técnicas o talleres": 500,
+    "Laboratorios": 750,
+    "Áreas de almacenamiento": 200,
+    "Salas de cómputo": 300,
+    "Salas de juntas": 200,
+    "Pasillos y accesos": 100,
+    "Zonas de descanso": 150
+}
+
+opcion = st.selectbox("Selecciona el tipo de área (según NOM-025)", list(niveles_nom.keys()))
+lux_requerido = niveles_nom[opcion]
+st.markdown(f"**Nivel de iluminancia requerido (lux):** `{lux_requerido}`")
+
 fm = st.number_input("Factor de Mantenimiento (FM)", min_value=0.01, max_value=1.0, value=0.8)
 
-# Cálculo
 st.subheader("📊 Resultado")
 if flujo > 0 and area > 0 and lux_requerido > 0:
     luminarias = math.ceil((area * lux_requerido) / (flujo * cu * fm))
@@ -93,7 +110,6 @@ if flujo > 0 and area > 0 and lux_requerido > 0:
 else:
     st.info("Introduce todos los datos para calcular el número de luminarias.")
 
-# Tablas de apoyo visual para el maestro
 st.subheader("📚 Tablas de apoyo (según método cavidad zonal)")
 st.markdown("""
 **Tabla de reflectancias típicas:**
