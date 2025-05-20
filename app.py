@@ -7,6 +7,48 @@ import numpy as np
 st.set_page_config(page_title="Calculadora de Iluminación - NOM-025 + IES", layout="centered")
 st.title("🔆 Calculadora de Iluminación con archivo .IES")
 
+st.markdown("""
+### 🧭 Introducción
+Esta herramienta permite calcular el número de luminarias necesarias para cumplir con los requerimientos de iluminancia establecidos en la **NOM-025-STPS-2008**, utilizando el método de la cavidad zonal.
+
+### 🎯 Objetivo
+- Calcular luminarias a partir de archivos `.IES` reales.
+- Estimar automáticamente el área, RCR, CU y FM.
+- Aplicar los niveles de iluminación requeridos según el tipo de actividad.
+- Visualizar la distribución estimada de luminarias.
+- Explicar conceptos clave como reflectancias, alturas y mantenimiento.
+
+### 🎨 ¿Qué son las reflectancias?
+Las reflectancias indican qué tanta luz reflejan las superficies del recinto:
+- **Techo (ρcc)**: usualmente blanco o claro. Afecta la luz indirecta descendente.
+- **Paredes (ρpp)**: paredes claras reflejan más luz útil.
+- **Piso (ρcf)**: los pisos oscuros absorben más luz, pero también existen pisos claros como mármol o cerámica brillante que pueden reflejar bien la luz.
+
+Usar valores correctos mejora la precisión del cálculo del **CU (Coeficiente de Utilización)**.
+
+### 🧼 ¿Qué es el Factor de Mantenimiento (FM)?
+El **FM** representa la reducción esperada del flujo luminoso con el paso del tiempo, debido a:
+- Acumulación de polvo o suciedad en las luminarias y superficies.
+- Degradación del rendimiento de las lámparas.
+- Condiciones ambientales y frecuencia de limpieza.
+
+Valores típicos del FM van de **0.5** a **0.8**, siendo:
+- **0.8** para ambientes limpios con buen mantenimiento.
+- **0.7** para áreas con polvo moderado o limpieza ocasional.
+- **0.6 o menos** para zonas industriales o sin mantenimiento.
+
+Este factor se aplica para garantizar que la iluminación calculada siga cumpliendo con la norma incluso tras un periodo prolongado de uso.
+
+### 🎨 Tabla de FM por tipo de ambiente
+
+| Tipo de ambiente                                | FM sugerido |
+|--------------------------------------------------|-------------|
+| 🟢 Ambiente limpio (oficinas, laboratorios)       | 0.8         |
+| 🟡 Moderadamente sucio (uso general, almacenes)   | 0.7         |
+| 🟠 Industrial ligero/agresivo                     | 0.6         |
+| 🔴 Ambiente severo / mantenimiento deficiente     | 0.5         |
+""")
+
 uploaded_file = st.file_uploader("📥 Sube tu archivo .IES para extraer el flujo luminoso", type=["ies"])
 
 def extraer_flujo_luminoso(archivo):
@@ -36,93 +78,14 @@ ancho = st.number_input("Ancho del recinto (m)", min_value=0.0)
 area = largo * ancho
 st.markdown(f"**Área calculada automáticamente:** `{area:.2f} m²`")
 
-h_montaje = st.number_input("Altura de montaje de la luminaria (m)", min_value=0.0)
-h_trabajo = st.number_input("Altura del plano de trabajo (m)", min_value=0.0, value=0.8)
+col1, col2 = st.columns(2)
+with col1:
+    h_montaje = st.number_input("Altura de montaje de la luminaria (m)", min_value=0.0, help="Distancia desde el piso hasta el centro de la luminaria.")
+with col2:
+    h_trabajo = st.number_input("Altura del plano de trabajo (m)", min_value=0.0, value=0.8, help="Altura donde se realiza la tarea, como escritorios o mesas.")
+
 h_efectiva = h_montaje - h_trabajo
 rcr = 0
 if h_efectiva > 0 and largo > 0 and ancho > 0:
     rcr = round(5 * (largo + ancho) / (largo * ancho) * h_efectiva, 2)
 st.markdown(f"**Índice de Cavidad del Recinto (RCR):** `{rcr}`")
-
-st.subheader("🎨 Reflectancias del recinto")
-reflectancia_techo = st.number_input("Reflectancia del techo (ρcc)", min_value=0.0, max_value=1.0, value=0.7)
-reflectancia_paredes = st.number_input("Reflectancia de las paredes (ρpp)", min_value=0.0, max_value=1.0, value=0.5)
-reflectancia_piso = st.number_input("Reflectancia del piso (ρcf)", min_value=0.0, max_value=1.0, value=0.2)
-
-cu = 0.6 * ((reflectancia_techo + reflectancia_paredes + reflectancia_piso)/3) * (1 / (1 + math.exp(-rcr + 3)))
-cu = round(min(max(cu, 0.01), 1.0), 3)
-st.markdown(f"**CU estimado automáticamente:** `{cu}`")
-
-niveles_nom = {
-    "Oficinas (actividades de lectura/escritura)": 300,
-    "Áreas de tránsito o exteriores": 100,
-    "Áreas técnicas o talleres": 500,
-    "Laboratorios": 750,
-    "Áreas de almacenamiento": 200,
-    "Salas de cómputo": 300,
-    "Salas de juntas": 200,
-    "Pasillos y accesos": 100,
-    "Zonas de descanso": 150
-}
-
-opcion = st.selectbox("Selecciona el tipo de área (según NOM-025)", list(niveles_nom.keys()))
-lux_requerido = niveles_nom[opcion]
-st.markdown(f"**Nivel de iluminancia requerido (lux):** `{lux_requerido}`")
-
-ambiente = st.selectbox("Selecciona el tipo de ambiente", ["Limpio", "Sujeto a polvo o suciedad", "Ambiente industrial o agresivo"])
-fm_dict = {
-    "Limpio": 0.8,
-    "Sujeto a polvo o suciedad": 0.7,
-    "Ambiente industrial o agresivo": 0.6
-}
-fm = fm_dict[ambiente]
-st.markdown(f"**Factor de mantenimiento (FM):** `{fm}`")
-
-st.subheader("📊 Resultado")
-if flujo > 0 and area > 0 and lux_requerido > 0:
-    luminarias = math.ceil((area * lux_requerido) / (flujo * cu * fm))
-    st.success(f"🔧 Número de luminarias necesarias: {luminarias}")
-
-    cols = math.ceil(math.sqrt(luminarias * (largo / ancho)))
-    rows = math.ceil(luminarias / cols)
-    st.markdown("### 🖼️ Distribución estimada de luminarias")
-    fig, ax = plt.subplots(figsize=(6, 6))
-    for i in range(rows):
-        for j in range(cols):
-            if i * cols + j < luminarias:
-                ax.plot(j + 0.5, i + 0.5, 'o', color='orange')
-    ax.set_xlim(0, cols)
-    ax.set_ylim(0, rows)
-    ax.set_aspect('equal')
-    ax.set_xticks([])
-    ax.set_yticks([])
-    ax.set_title("Vista superior de la distribución estimada")
-    st.pyplot(fig)
-else:
-    st.info("Introduce todos los datos para calcular el número de luminarias.")
-
-st.subheader("📚 Tabla de factor de mantenimiento (FM) por color")
-st.markdown("""
-<style>
-.red   { background-color: #ffcccc; padding: 4px; }
-.orange { background-color: #ffe5cc; padding: 4px; }
-.yellow { background-color: #ffffcc; padding: 4px; }
-.green  { background-color: #e6ffcc; padding: 4px; }
-</style>
-
-<table>
-<tr><th>Tipo de ambiente</th><th class='green'>FM sugerido</th></tr>
-<tr><td class='green'>Ambiente limpio (oficinas, laboratorios)</td><td class='green'>0.8</td></tr>
-<tr><td class='yellow'>Moderadamente sucio (uso general, almacenes)</td><td class='yellow'>0.7</td></tr>
-<tr><td class='orange'>Industrial ligero/agresivo</td><td class='orange'>0.6</td></tr>
-<tr><td class='red'>Ambiente severo / mantenimiento deficiente</td><td class='red'>0.5</td></tr>
-</table>
-""", unsafe_allow_html=True)
-
-st.subheader("🌐 Enlaces de referencia externa")
-st.markdown("""
-- [📄 Tabla de factor de mantenimiento - La Pantalla](https://www.la-pantalla.com.ar/tabla-de-factor-de-mantenimiento-iluminacion/)
-- [📘 NOM-025-STPS-2008 - Diario Oficial de la Federación](https://www.dof.gob.mx/normasOficiales/3275/stps/stps.htm)
-""")
-
-
