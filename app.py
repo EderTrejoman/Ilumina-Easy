@@ -6,8 +6,23 @@ st.set_page_config(page_title="Calculadora de Iluminación - NOM-025 + IES", lay
 st.title("🔆 Calculadora de Iluminación con archivo .IES")
 
 st.markdown("""
-Esta app te permite calcular el número de luminarias necesarias según la **NOM-025-STPS-2008**, utilizando flujo luminoso extraído automáticamente desde un archivo `.IES` o ingresado manualmente.
-También incluye el cálculo del **RCR (Índice de Cavidad del Recinto)** y el ingreso manual del **CU**.
+## 🎯 Introducción
+
+Esta aplicación está diseñada para realizar cálculos de iluminación conforme a la **NOM-025-STPS-2008**, que establece las condiciones de iluminación adecuadas en los centros de trabajo en México, con el fin de garantizar la seguridad y eficiencia visual.
+
+Se utiliza el **método de cavidad zonal**, que permite determinar la cantidad óptima de luminarias necesarias para cumplir con un nivel mínimo de iluminancia (lux) en un área específica, tomando en cuenta el tipo de luminaria, las características del recinto, las superficies y el ambiente de trabajo.
+
+La app también permite **cargar archivos fotométricos (.IES)** de luminarias reales, lo que automatiza la obtención del flujo luminoso (lm) para un cálculo más técnico y profesional.
+
+## 🎯 Objetivo
+
+Facilitar el cálculo del número de luminarias necesarias para un recinto, considerando:
+- El flujo luminoso extraído de un archivo `.IES`.
+- Las dimensiones del área a iluminar.
+- Las condiciones del entorno (altura, reflectancias, mantenimiento).
+- Parámetros definidos por la NOM-025-STPS-2008.
+
+---
 """)
 
 uploaded_file = st.file_uploader("📥 Sube tu archivo .IES para extraer el flujo luminoso", type=["ies"])
