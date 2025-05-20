@@ -89,3 +89,59 @@ rcr = 0
 if h_efectiva > 0 and largo > 0 and ancho > 0:
     rcr = round(5 * (largo + ancho) / (largo * ancho) * h_efectiva, 2)
 st.markdown(f"**Índice de Cavidad del Recinto (RCR):** `{rcr}`")
+
+st.subheader("🎨 Reflectancias del recinto")
+ρcc = st.number_input("Reflectancia del techo (ρcc)", min_value=0.0, max_value=1.0, value=0.7)
+ρpp = st.number_input("Reflectancia de las paredes (ρpp)", min_value=0.0, max_value=1.0, value=0.5)
+ρcf = st.number_input("Reflectancia del piso (ρcf)", min_value=0.0, max_value=1.0, value=0.3)
+
+cu = 0.6 * ((ρcc + ρpp + ρcf)/3) * (1 / (1 + math.exp(-rcr + 3)))
+cu = round(min(max(cu, 0.01), 1.0), 3)
+st.markdown(f"**CU estimado automáticamente:** `{cu}`")
+
+st.subheader("🏢 Tipo de área (según NOM-025)")
+tipo_area = st.selectbox("Selecciona el tipo de área", {
+    "Oficinas": 300,
+    "Talleres o áreas técnicas": 500,
+    "Almacenes": 200,
+    "Pasillos": 100,
+    "Laboratorios": 750,
+    "Salas de cómputo": 300,
+    "Zonas de descanso": 150
+})
+lux_requerido = st.session_state.get("lux", tipo_area)
+st.markdown(f"**Nivel de iluminancia requerido:** `{lux_requerido} lux`")
+
+st.subheader("🏭 Ambiente de operación")
+opciones_fm = {
+    "🟢 Limpio": 0.8,
+    "🟡 Moderado": 0.7,
+    "🟠 Industrial ligero": 0.6,
+    "🔴 Severo": 0.5
+}
+am_ambiente = st.selectbox("Selecciona el ambiente de operación", list(opciones_fm.keys()))
+fm = opciones_fm[am_ambiente]
+st.markdown(f"**FM aplicado automáticamente:** `{fm}`")
+
+st.subheader("💡 Resultado del cálculo")
+if flujo and cu and fm and lux_requerido:
+    n_luminarias = math.ceil((area * lux_requerido) / (flujo * cu * fm))
+    st.success(f"🔧 Número estimado de luminarias: {n_luminarias}")
+
+    st.markdown("### 📐 Distribución estimada de luminarias")
+    cols = math.ceil(math.sqrt(n_luminarias * (largo / ancho)))
+    rows = math.ceil(n_luminarias / cols)
+    fig, ax = plt.subplots(figsize=(6, 6))
+    for i in range(rows):
+        for j in range(cols):
+            if i * cols + j < n_luminarias:
+                ax.plot(j + 0.5, i + 0.5, 'o', color='orange')
+    ax.set_xlim(0, cols)
+    ax.set_ylim(0, rows)
+    ax.set_aspect('equal')
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_title("Vista superior de luminarias")
+    st.pyplot(fig)
+else:
+    st.warning("🔧 Por favor completa todos los campos para calcular luminarias.")
