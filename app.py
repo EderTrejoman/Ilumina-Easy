@@ -100,16 +100,18 @@ cu = round(min(max(cu, 0.01), 1.0), 3)
 st.markdown(f"**CU estimado automáticamente:** `{cu}`")
 
 st.subheader("🏢 Tipo de área (según NOM-025)")
-tipo_area = st.selectbox("Selecciona el tipo de área", {
-    "Oficinas": 300,
-    "Talleres o áreas técnicas": 500,
-    "Almacenes": 200,
-    "Pasillos": 100,
-    "Laboratorios": 750,
+areas = {
+    "Áreas de trabajo en oficinas": 300,
+    "Talleres y laboratorios": 500,
     "Salas de cómputo": 300,
-    "Zonas de descanso": 150
-})
-lux_requerido = st.session_state.get("lux", tipo_area)
+    "Salas de juntas": 200,
+    "Pasillos y accesos": 100,
+    "Áreas de almacenamiento": 200,
+    "Zonas de descanso": 150,
+    "Áreas exteriores": 50
+}
+area_seleccionada = st.selectbox("Selecciona el tipo de área", list(areas.keys()))
+lux_requerido = areas[area_seleccionada]
 st.markdown(f"**Nivel de iluminancia requerido:** `{lux_requerido} lux`")
 
 st.subheader("🏭 Ambiente de operación")
