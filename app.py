@@ -96,6 +96,19 @@ if flujo > 0 and cu > 0 and fm > 0:
 else:
     st.warning("⚠️ Faltan datos para calcular el número de luminarias.")
 
+# --- CÁLCULO INVERSO ---
+st.subheader("🔁 Modo inverso: ¿Qué lux obtengo con X luminarias?")
+n_usuario = st.number_input("Número de luminarias disponibles", min_value=1, step=1)
+if flujo > 0 and cu > 0 and fm > 0:
+    lux_estimado = round((n_usuario * flujo * cu * fm) / area, 2)
+    st.info(f"Con `{n_usuario}` luminarias de `{flujo} lm` se obtienen aproximadamente **{lux_estimado} lux**.")
+    if lux_estimado < lux_requerido:
+        st.error(f"❌ Advertencia: el nivel de iluminancia obtenido ({lux_estimado} lux) es inferior al requerido por la NOM-025 ({lux_requerido} lux).")
+    elif lux_estimado >= lux_requerido:
+        st.success("✅ Cumple con el nivel mínimo de iluminancia requerido.")
+else:
+    st.warning("⚠️ Ingresa todos los valores anteriores para estimar los lux.")
+
 # --- DISTRIBUCIÓN VISUAL ---
 st.subheader("🖼️ Distribución estimada de luminarias")
 if flujo > 0 and cu > 0 and fm > 0 and n_usuario > 0:
@@ -113,8 +126,6 @@ if flujo > 0 and cu > 0 and fm > 0 and n_usuario > 0:
     ax.set_yticks([])
     ax.set_title("Vista superior del recinto con distribución estimada")
     st.pyplot(fig)
-
-# --- CÁLCULO INVERSO ---
 st.subheader("🔁 Modo inverso: ¿Qué lux obtengo con X luminarias?")
 n_usuario = st.number_input("Número de luminarias disponibles", min_value=1, step=1)
 if flujo > 0 and cu > 0 and fm > 0:
