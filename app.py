@@ -1,4 +1,3 @@
-
 import streamlit as st
 import re
 import math
@@ -99,13 +98,13 @@ else:
 
 # --- DISTRIBUCIÓN VISUAL ---
 st.subheader("🖼️ Distribución estimada de luminarias")
-if flujo > 0 and cu > 0 and fm > 0 and n_luminarias > 0:
-    cols = math.ceil(math.sqrt(n_luminarias * (largo / ancho)))
-    rows = math.ceil(n_luminarias / cols)
+if flujo > 0 and cu > 0 and fm > 0 and n_usuario > 0:
+    cols = math.ceil(math.sqrt(n_usuario * (largo / ancho)))
+    rows = math.ceil(n_usuario / cols)
     fig, ax = plt.subplots(figsize=(6, 6))
     for i in range(rows):
         for j in range(cols):
-            if i * cols + j < n_luminarias:
+            if i * cols + j < n_usuario:
                 ax.plot(j + 0.5, i + 0.5, 'o', color='orange')
     ax.set_xlim(0, cols)
     ax.set_ylim(0, rows)
@@ -121,5 +120,9 @@ n_usuario = st.number_input("Número de luminarias disponibles", min_value=1, st
 if flujo > 0 and cu > 0 and fm > 0:
     lux_estimado = round((n_usuario * flujo * cu * fm) / area, 2)
     st.info(f"Con `{n_usuario}` luminarias de `{flujo} lm` se obtienen aproximadamente **{lux_estimado} lux**.")
+    if lux_estimado < lux_requerido:
+        st.error(f"❌ Advertencia: el nivel de iluminancia obtenido ({lux_estimado} lux) es inferior al requerido por la NOM-025 ({lux_requerido} lux).")
+    elif lux_estimado >= lux_requerido:
+        st.success("✅ Cumple con el nivel mínimo de iluminancia requerido.")
 else:
     st.warning("⚠️ Ingresa todos los valores anteriores para estimar los lux.")
