@@ -1,3 +1,4 @@
+
 import streamlit as st
 import re
 import math
@@ -95,6 +96,24 @@ if flujo > 0 and cu > 0 and fm > 0:
     st.success(f"🔧 Número estimado de luminarias: {n_luminarias}")
 else:
     st.warning("⚠️ Faltan datos para calcular el número de luminarias.")
+
+# --- DISTRIBUCIÓN VISUAL ---
+st.subheader("🖼️ Distribución estimada de luminarias")
+if flujo > 0 and cu > 0 and fm > 0 and n_luminarias > 0:
+    cols = math.ceil(math.sqrt(n_luminarias * (largo / ancho)))
+    rows = math.ceil(n_luminarias / cols)
+    fig, ax = plt.subplots(figsize=(6, 6))
+    for i in range(rows):
+        for j in range(cols):
+            if i * cols + j < n_luminarias:
+                ax.plot(j + 0.5, i + 0.5, 'o', color='orange')
+    ax.set_xlim(0, cols)
+    ax.set_ylim(0, rows)
+    ax.set_aspect('equal')
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_title("Vista superior del recinto con distribución estimada")
+    st.pyplot(fig)
 
 # --- CÁLCULO INVERSO ---
 st.subheader("🔁 Modo inverso: ¿Qué lux obtengo con X luminarias?")
