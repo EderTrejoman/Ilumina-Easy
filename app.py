@@ -1,6 +1,8 @@
 import streamlit as st
 import re
 import math
+import matplotlib.pyplot as plt
+import numpy as np
 
 st.set_page_config(page_title="Calculadora de Iluminación - NOM-025 + IES", layout="centered")
 st.title("🔆 Calculadora de Iluminación con archivo .IES")
@@ -107,6 +109,23 @@ st.subheader("📊 Resultado")
 if flujo > 0 and area > 0 and lux_requerido > 0:
     luminarias = math.ceil((area * lux_requerido) / (flujo * cu * fm))
     st.success(f"🔧 Número de luminarias necesarias: {luminarias}")
+
+    # Visualización de distribución de luminarias (grilla 2D)
+    cols = math.ceil(math.sqrt(luminarias * (largo / ancho)))
+    rows = math.ceil(luminarias / cols)
+    st.markdown("### 🖼️ Distribución estimada de luminarias")
+    fig, ax = plt.subplots(figsize=(6, 6))
+    for i in range(rows):
+        for j in range(cols):
+            if i * cols + j < luminarias:
+                ax.plot(j + 0.5, i + 0.5, 'o', color='orange')
+    ax.set_xlim(0, cols)
+    ax.set_ylim(0, rows)
+    ax.set_aspect('equal')
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_title("Vista superior de la distribución estimada")
+    st.pyplot(fig)
 else:
     st.info("Introduce todos los datos para calcular el número de luminarias.")
 
