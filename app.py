@@ -7,6 +7,20 @@ import numpy as np
 st.set_page_config(page_title="Calculadora de Iluminación - NOM-025 + IES", layout="centered")
 st.title("🔆 Calculadora de Iluminación con archivo .IES")
 
+st.markdown("""
+### 🧭 Introducción
+Esta calculadora tiene como objetivo ayudar a determinar el número de luminarias necesarias o los niveles de iluminancia alcanzados en un espacio determinado, de acuerdo con la **NOM-025-STPS-2008**.
+
+### 🎯 Objetivo
+- Calcular el número de luminarias requeridas según el tipo de área.
+- Estimar los lux reales obtenidos con un número dado de luminarias.
+- Automatizar el uso del flujo luminoso desde archivos `.IES`.
+- Incluir reflectancias, altura efectiva, CU y FM para cálculos profesionales.
+
+### 🔭 Visión
+Crear una herramienta de consulta profesional, clara y amigable para estudiantes, técnicos y profesionales en iluminación, que facilite decisiones rápidas de diseño sin dejar de apegarse a normas oficiales.
+""")
+
 # --- INTRODUCCIÓN Y DEFINICIONES ---
 # (Texto introductorio y tablas explicativas omitidos por brevedad)
 
