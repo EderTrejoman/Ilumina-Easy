@@ -1,14 +1,15 @@
 import streamlit as st
 import re
+import math
 
-st.set_page_config(page_title="Carga de IES - Flujo Luminoso", layout="centered")
-st.title("📥 Carga de archivo .IES")
+st.set_page_config(page_title="Calculadora de Iluminación - NOM-025 + IES", layout="centered")
+st.title("🔆 Calculadora de Iluminación con archivo .IES")
+
 st.markdown("""
-Este módulo te permite subir un archivo `.IES` y extraer automáticamente el **flujo luminoso total**.
-Si el archivo no lo contiene, puedes ingresar el valor manualmente.
+Esta app te permite calcular el número de luminarias necesarias según la **NOM-025-STPS-2008**, utilizando flujo luminoso extraído automáticamente desde un archivo `.IES` o ingresado manualmente.
 """)
 
-uploaded_file = st.file_uploader("Carga tu archivo .IES para extraer el flujo luminoso", type=["ies"])
+uploaded_file = st.file_uploader("📥 Sube tu archivo .IES para extraer el flujo luminoso", type=["ies"])
 
 # Función para extraer flujo luminoso desde el .IES
 def extraer_flujo_luminoso(archivo):
@@ -26,20 +27,30 @@ def extraer_flujo_luminoso(archivo):
     except:
         return None
 
-# Entrada y validación
-definir_flujo = None
+# Entrada de flujo luminoso
+flujo = None
 if uploaded_file:
-    flujo = extraer_flujo_luminoso(uploaded_file)
-    if flujo:
-        st.success(f"\u2705 Flujo luminoso total extraído: **{flujo} lúmenes**")
-        definir_flujo = flujo
+    flujo_extraido = extraer_flujo_luminoso(uploaded_file)
+    if flujo_extraido:
+        st.success(f"✅ Flujo luminoso extraído: {flujo_extraido} lm")
+        flujo = flujo_extraido
     else:
-        st.warning("\u26A0\ufe0f No se pudo extraer el flujo luminoso del archivo. Ingrésalo manualmente.")
-        definir_flujo = st.number_input("Introduce el flujo manualmente (lm)", min_value=0.0)
+        st.warning("⚠️ No se pudo extraer el flujo. Introduce manualmente:")
+        flujo = st.number_input("Flujo luminoso (lm)", min_value=0.0)
 else:
-    definir_flujo = st.number_input("Introduce el flujo manualmente (lm)", min_value=0.0)
+    flujo = st.number_input("Flujo luminoso (lm)", min_value=0.0)
 
-# Resultado final
-if definir_flujo:
-    st.markdown(f"### \\n    **Flujo luminoso activo para cálculo:** `{definir_flujo} lm`")
-    # Aquí puedes conectar el flujo con el cálculo de número de luminarias, lux, etc.
+# Entradas adicionales para cálculo NOM-025
+st.subheader("📐 Parámetros del recinto")
+area = st.number_input("Área del recinto (m²)", min_value=0.0)
+lux_requerido = st.number_input("Nivel de iluminancia requerido (lux)", min_value=0.0, value=300.0)
+cu = st.number_input("Coeficiente de Utilización (CU)", min_value=0.01, max_value=1.0, value=0.6)
+fm = st.number_input("Factor de Mantenimiento (FM)", min_value=0.01, max_value=1.0, value=0.8)
+
+# Cálculo de número de luminarias
+st.subheader("🔢 Resultado")
+if flujo > 0 and area > 0 and lux_requerido > 0:
+    luminarias = math.ceil((area * lux_requerido) / (flujo * cu * fm))
+    st.success(f"🔧 Número de luminarias necesarias: {luminarias}")
+else:
+    st.info("Introduce todos los datos para calcular el número de luminarias.")
