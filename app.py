@@ -80,6 +80,38 @@ if uploaded_file is not None:
         lux_requerido = areas_nom[tipo_area]
         st.info(f"🔎 Iluminancia requerida según NOM-025-STPS-2008: {lux_requerido} lux")
 
+    # Factor de mantenimiento
+    st.subheader("🛠 Cálculo del Factor de Mantenimiento (FM)")
+    st.markdown("""
+    El **FM** (factor de mantenimiento) considera la reducción de luz con el tiempo por polvo, suciedad o envejecimiento del sistema.
+    Depende de la **categoría de mantenimiento**, la **condición del ambiente** y el **tiempo de uso**.
+    """)
+
+    categorias = ["I", "II", "III", "IV", "V", "VI"]
+    condiciones = ["Muy limpio", "Limpio", "Medio limpio", "Sucio", "Muy sucio"]
+
+    categoria = st.selectbox("Categoría de mantenimiento", categorias)
+    condicion = st.selectbox("Condición del ambiente", condiciones)
+    t = st.number_input("Tiempo de operación (meses)", min_value=1.0, value=12.0)
+
+    idx_cat = categorias.index(categoria)
+    idx_cond = condiciones.index(condicion)
+
+    tabla_B = [0.69, 0.62, 0.70, 0.72, 0.83, 0.88]
+    tabla_A = [
+        [0.038, 0.071, 0.111, 0.162, 0.301],
+        [0.033, 0.068, 0.102, 0.147, 0.188],
+        [0.079, 0.106, 0.143, 0.184, 0.236],
+        [0.070, 0.131, 0.214, 0.314, 0.452],
+        [0.078, 0.128, 0.190, 0.249, 0.321],
+        [0.076, 0.145, 0.218, 0.284, 0.396]
+    ]
+
+    A = tabla_A[idx_cat][idx_cond]
+    B = tabla_B[idx_cat]
+    fm = round(math.exp(-A * (t ** B)), 3)
+    st.success(f"✅ FM calculado: {fm}")
+
     # Extracción de CU desde .IES
     angulos = []
     candelas = []
@@ -109,13 +141,13 @@ if uploaded_file is not None:
 
         # Cálculo de luminarias necesarias
         st.subheader("🔢 Número de luminarias necesarias")
-        n_real = math.ceil((area * lux_requerido) / (flujo_total * cu_real))
-        st.write(f"💡 Luminarias necesarias con CU real: {n_real}")
+        n_real = math.ceil((area * lux_requerido) / (flujo_total * cu_real * fm))
+        st.write(f"💡 Luminarias necesarias con CU real y FM: {n_real}")
 
         # Modo inverso
         st.subheader("🔁 ¿Qué lux se obtiene con cierto número de luminarias?")
         n_usuario = st.number_input("Número de luminarias disponibles", min_value=1, value=4)
-        lux_resultante = round((n_usuario * flujo_total * cu_real) / area, 2)
+        lux_resultante = round((n_usuario * flujo_total * cu_real * fm) / area, 2)
         st.write(f"🔦 Lux obtenido con {n_usuario} luminarias: {lux_resultante} lux")
 
         # Visualización 2D
