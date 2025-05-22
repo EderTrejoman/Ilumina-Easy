@@ -1,175 +1,153 @@
-# CALCULADORA PROFESIONAL DE ILUMINACIÓN EN GOOGLE COLAB
-# Autor: Eder Helio Martínez Trejo
-# Basado en NOM-025-STPS-2008 y archivos .IES
-
-# BLOQUE 1: Configuración inicial y subida de archivo .IES
-from google.colab import files
+import streamlit as st
 import numpy as np
 import math
 import matplotlib.pyplot as plt
 
-print("🔆 Calculadora de Iluminación (CU real vs estimado) - NOM-025 + .IES")
+st.set_page_config(page_title="Calculadora de Iluminación - NOM-025 + .IES")
+st.title("🔆 Calculadora de Iluminación")
+st.caption("Autor: Eder Helio Martínez Trejo — Basado en NOM-025-STPS-2008 y archivos .IES")
 
-uploaded = files.upload()
+uploaded_file = st.file_uploader("📂 Sube tu archivo .IES", type=["ies"])
 
-for fname in uploaded.keys():
-    with open(fname, 'r', encoding='latin1') as f:
-        lines = f.readlines()
-        print(f"\n📂 Archivo cargado: {fname}\n")
-        print("🧾 Primeras 40 líneas del archivo .IES:")
+if uploaded_file is not None:
+    lines = uploaded_file.getvalue().decode("latin1").splitlines()
+    st.success(f"Archivo cargado: {uploaded_file.name}")
+
+    with st.expander("🧾 Ver primeras 40 líneas del archivo"):
         for i, line in enumerate(lines[:40]):
-            print(f"{i+1:02d}: {line.strip()}")
+            st.text(f"{i+1:02d}: {line.strip()}")
 
-# BLOQUE 2: Extracción de ángulos y candelas + cálculo de CU real
-print("\n📐 Extrayendo ángulos y valores de candela...")
+    # Extracción de ángulos y candelas
+    angulos = []
+    candelas = []
 
-angulos = []
-candelas = []
+    for line in lines:
+        valores = line.strip().split()
+        try:
+            valores = [float(x) for x in valores]
+        except:
+            continue
+        if len(valores) > 10:
+            if not angulos:
+                angulos = valores
+            elif not candelas:
+                candelas = valores
+            if angulos and candelas:
+                break
 
-for i, line in enumerate(lines):
-    valores = line.strip().split()
-    try:
-        valores = [float(x) for x in valores]
-    except:
-        continue
+    if angulos and candelas:
+        n = min(len(angulos), len(candelas))
+        ang_rad = np.radians(angulos[:n])
+        candelas_utiles = np.array(candelas[:n]) * np.sin(ang_rad) * 2 * np.pi * np.cos(ang_rad)
+        flujo_util = np.trapz(candelas_utiles, ang_rad)
+        flujo_total = st.number_input("🔢 Flujo total declarado por la luminaria (lm)", value=1200.0)
+        cu_real = round(flujo_util / flujo_total, 3)
+        st.success(f"✅ CU calculado desde .IES (real): {cu_real}")
+    else:
+        st.error("⚠ No se pudo extraer CU real. Asegúrate de que el archivo tenga ángulos y candelas.")
 
-    if len(valores) > 10:
-        if not angulos:
-            angulos = valores
-        elif not candelas:
-            candelas = valores
-        if angulos and candelas:
-            break
+    st.subheader("📏 Parámetros del recinto")
+    largo = st.number_input("Largo del recinto (m)", value=4.0)
+    ancho = st.number_input("Ancho del recinto (m)", value=4.0)
+    h_montaje = st.number_input("Altura de montaje (m)", value=3.0)
+    h_trabajo = st.number_input("Altura del plano de trabajo (m)", value=0.8)
 
-if angulos and candelas:
-    n = min(len(angulos), len(candelas))
-    ang_rad = np.radians(angulos[:n])
-    candelas_utiles = np.array(candelas[:n]) * np.sin(ang_rad) * 2 * np.pi * np.cos(ang_rad)
-    flujo_util = np.trapz(candelas_utiles, ang_rad)
-    flujo_total = 1200  # puedes ajustar este valor si el .IES lo declara distinto
-    cu_real = round(flujo_util / flujo_total, 3)
-    print(f"\n✅ CU calculado desde .IES (real): {cu_real}")
-else:
-    print("⚠ No se pudo extraer CU real. Revisa que el archivo tenga tabla de ángulos y candelas válidas.")
+    ρcc = st.number_input("Reflectancia techo (ρcc)", min_value=0.0, max_value=1.0, value=0.7)
+    ρpp = st.number_input("Reflectancia paredes (ρpp)", min_value=0.0, max_value=1.0, value=0.5)
+    ρcf = st.number_input("Reflectancia piso (ρcf)", min_value=0.0, max_value=1.0, value=0.2)
 
-# BLOQUE 3: Ingreso de datos del recinto y cálculo de CU estimado
-print("\n📏 Ingreso de parámetros del recinto")
+    area = largo * ancho
+    h_efectiva = h_montaje - h_trabajo
+    rcr = round(5 * h_efectiva * (largo + ancho) / (largo * ancho), 2)
+    reflectancia_media = (ρcc + ρpp + ρcf) / 3
+    cu_estimado = round(0.6 * reflectancia_media * (1 / (1 + math.exp(-rcr + 3))), 3)
 
-largo = float(input("Largo del recinto (m): "))
-ancho = float(input("Ancho del recinto (m): "))
-area = largo * ancho
+    st.info(f"📐 RCR: {rcr} — CU estimado: {cu_estimado}")
 
-h_montaje = float(input("Altura de montaje de la luminaria (m): "))
-h_trabajo = float(input("Altura del plano de trabajo (m): "))
-h_efectiva = h_montaje - h_trabajo
+    st.subheader("💡 Nivel de iluminancia requerido")
+    tipo_area = st.selectbox("Tipo de área según NOM-025", ["Oficina / Aula (300 lux)", "Pasillo (100 lux)", "Exterior (20 lux)", "Otro (ingresar manual)"])
+    if tipo_area == "Oficina / Aula (300 lux)":
+        lux_requerido = 300
+    elif tipo_area == "Pasillo (100 lux)":
+        lux_requerido = 100
+    elif tipo_area == "Exterior (20 lux)":
+        lux_requerido = 20
+    else:
+        lux_requerido = st.number_input("Ingresa nivel de iluminancia (lux)", value=200)
 
-ρcc = float(input("Reflectancia del techo (ρcc, entre 0 y 1): "))
-ρpp = float(input("Reflectancia de las paredes (ρpp, entre 0 y 1): "))
-ρcf = float(input("Reflectancia del piso (ρcf, entre 0 y 1): "))
+    st.subheader("🛠 Cálculo del Factor de Mantenimiento (FM)")
 
-rcr = round(5 * h_efectiva * (largo + ancho) / (largo * ancho), 2)
-reflectancia_media = (ρcc + ρpp + ρcf) / 3
-cu_estimado = round(0.6 * reflectancia_media * (1 / (1 + math.exp(-rcr + 3))), 3)
+    categorias = ["I", "II", "III", "IV", "V", "VI"]
+    condiciones = ["Muy limpio", "Limpio", "Medio limpio", "Sucio", "Muy sucio"]
 
-print(f"\n📐 Área: {area} m²")
-print(f"📐 RCR calculado: {rcr}")
-print(f"🔧 CU estimado según fórmula: {cu_estimado}")
+    categoria = st.selectbox("Categoría de mantenimiento", categorias)
+    condicion = st.selectbox("Condición del ambiente", condiciones)
+    t = st.number_input("Tiempo de operación (meses)", min_value=1.0, value=12.0)
 
-# BLOQUE 4: Cálculo del número de luminarias necesarias y FM
-print("\n💡 Cálculo del número de luminarias necesarias")
+    idx_cat = categorias.index(categoria)
+    idx_cond = condiciones.index(condicion)
 
-print("\n🏢 Selecciona el tipo de área a iluminar (según NOM-025-STPS-2008):")
-print("1. Oficina o aula (300 lux)\n2. Pasillo o circulación (100 lux)\n3. Área exterior (20 lux)")
+    tabla_B = [0.69, 0.62, 0.70, 0.72, 0.83, 0.88]
+    tabla_A = [
+        [0.038, 0.071, 0.111, 0.162, 0.301],
+        [0.033, 0.068, 0.102, 0.147, 0.188],
+        [0.079, 0.106, 0.143, 0.184, 0.236],
+        [0.070, 0.131, 0.214, 0.314, 0.452],
+        [0.078, 0.128, 0.190, 0.249, 0.321],
+        [0.076, 0.145, 0.218, 0.284, 0.396]
+    ]
 
-opcion_area = input("Elige una opción (1-3): ")
-if opcion_area == '1':
-    lux_requerido = 300
-elif opcion_area == '2':
-    lux_requerido = 100
-elif opcion_area == '3':
-    lux_requerido = 20
-else:
-    lux_requerido = float(input("Ingresa manualmente el nivel de iluminancia requerido (lux): "))
+    A = tabla_A[idx_cat][idx_cond]
+    B = tabla_B[idx_cat]
+    fm = round(math.exp(-A * (t ** B)), 3)
+    st.success(f"✅ FM calculado: {fm}")
 
-print("\n🛠 Cálculo del Factor de Mantenimiento (FM)")
-print("Categoría de mantenimiento:\n1. I\n2. II\n3. III\n4. IV\n5. V\n6. VI")
-categoria = int(input("Selecciona categoría (1-6): ")) - 1
+    # Cálculo de luminarias
+    n_estimado = math.ceil((area * lux_requerido) / (flujo_total * cu_estimado * fm))
+    n_real = math.ceil((area * lux_requerido) / (flujo_total * cu_real * fm))
 
-print("\nCondición del ambiente:\n1. Muy limpio\n2. Limpio\n3. Medio limpio\n4. Sucio\n5. Muy sucio")
-condicion = int(input("Selecciona condición (1-5): ")) - 1
+    st.subheader("🔢 Resultado: número de luminarias necesarias")
+    st.write(f"💡 Con CU estimado: {n_estimado} luminarias")
+    st.write(f"💡 Con CU real (.IES): {n_real} luminarias")
+    st.write(f"🔻 Diferencia: {n_estimado - n_real} luminarias")
 
-t = float(input("\nTiempo de operación (en meses): "))
+    st.subheader("🔁 Modo inverso: ¿qué lux logro con X luminarias?")
+    n_usuario = st.number_input("Número de luminarias disponibles", min_value=1, value=4)
 
-tabla_B = [0.69, 0.62, 0.70, 0.72, 0.83, 0.88]
-tabla_A = [
-    [0.038, 0.071, 0.111, 0.162, 0.301],
-    [0.033, 0.068, 0.102, 0.147, 0.188],
-    [0.079, 0.106, 0.143, 0.184, 0.236],
-    [0.070, 0.131, 0.214, 0.314, 0.452],
-    [0.078, 0.128, 0.190, 0.249, 0.321],
-    [0.076, 0.145, 0.218, 0.284, 0.396]
-]
+    lux_real = round((n_usuario * flujo_total * cu_real * fm) / area, 2)
+    lux_estimado = round((n_usuario * flujo_total * cu_estimado * fm) / area, 2)
 
-A = tabla_A[categoria][condicion]
-B = tabla_B[categoria]
-fm = round(math.exp(-A * (t ** B)), 3)
-print(f"\n✅ FM calculado: {fm}")
+    st.write(f"🔦 Lux con CU real: {lux_real} lux")
+    st.write(f"🔦 Lux con CU estimado: {lux_estimado} lux")
 
-n_estimado = math.ceil((area * lux_requerido) / (flujo_total * cu_estimado * fm))
-n_real = math.ceil((area * lux_requerido) / (flujo_total * cu_real * fm))
+    if lux_real < lux_requerido:
+        st.warning(f"⚠ CU real: por debajo del requerido ({lux_requerido} lux)")
+    else:
+        st.success("✅ CU real cumple el nivel de iluminancia.")
 
-print(f"\n💡 Luminarias con CU estimado: {n_estimado}")
-print(f"💡 Luminarias con CU real (.IES): {n_real}")
-print(f"🔻 Diferencia: {n_estimado - n_real} luminarias")
+    if lux_estimado < lux_requerido:
+        st.warning(f"⚠ CU estimado: por debajo del requerido ({lux_requerido} lux)")
+    else:
+        st.success("✅ CU estimado cumple el nivel de iluminancia.")
 
-# BLOQUE 5: Modo inverso
-print("\n🔁 Modo inverso: ¿Qué nivel de lux se obtiene con cierto número de luminarias?")
-n_usuario = int(input("Ingresa el número de luminarias disponibles: "))
+    st.subheader("📊 Visualización 2D de luminarias")
+    n_x = st.number_input("Luminarias en eje X (largo)", min_value=1, value=2)
+    n_y = st.number_input("Luminarias en eje Y (ancho)", min_value=1, value=2)
 
-lux_estimado_cu_real = round((n_usuario * flujo_total * cu_real * fm) / area, 2)
-lux_estimado_cu_estimado = round((n_usuario * flujo_total * cu_estimado * fm) / area, 2)
+    x_spacing = largo / (n_x + 1)
+    y_spacing = ancho / (n_y + 1)
 
-print(f"\n🔦 Lux obtenido con CU real (.IES): {lux_estimado_cu_real} lux")
-print(f"🔦 Lux obtenido con CU estimado: {lux_estimado_cu_estimado} lux")
+    x_coords = [x_spacing * (j + 1) for j in range(n_x) for i in range(n_y)]
+    y_coords = [y_spacing * (i + 1) for j in range(n_x) for i in range(n_y)]
 
-if lux_estimado_cu_real < lux_requerido:
-    print(f"⚠ Advertencia: Con CU real, el nivel de iluminancia está por debajo del requerido ({lux_requerido} lux).")
-else:
-    print("✅ Con CU real, se cumple el nivel de iluminancia requerido.")
-
-if lux_estimado_cu_estimado < lux_requerido:
-    print(f"⚠ Advertencia: Con CU estimado, el nivel de iluminancia está por debajo del requerido ({lux_requerido} lux).")
-else:
-    print("✅ Con CU estimado, se cumple el nivel de iluminancia requerido.")
-
-# BLOQUE 6: Visualización 2D de distribución de luminarias por coordenadas X e Y
-print("🧭 Visualización 2D de luminarias distribuidas (configurable)")
-
-try:
-    n_x = round(float(input("Número de luminarias en el eje X (largo): ")))
-    n_y = round(float(input("Número de luminarias en el eje Y (ancho): ")))
-    if n_x <= 0 or n_y <= 0:
-        raise ValueError
-except ValueError:
-    print("❌ Error: Ingresa valores válidos (mayores a 0). Se usarán 2x2 por defecto.")
-    n_x, n_y = 2, 2
-
-x_spacing = largo / (n_x + 1)
-y_spacing = ancho / (n_y + 1)
-
-x_coords = [x_spacing * (j + 1) for j in range(n_x) for i in range(n_y)]
-y_coords = [y_spacing * (i + 1) for j in range(n_x) for i in range(n_y)]
-
-plt.figure(figsize=(6,6))
-plt.scatter(x_coords, y_coords, s=200, c="orange", edgecolors="black", label="Luminaria")
-plt.title("Distribución de luminarias en planta")
-plt.xlabel("Largo del recinto (m)")
-plt.ylabel("Ancho del recinto (m)")
-plt.xlim(0, largo)
-plt.ylim(0, ancho)
-plt.xticks(np.arange(0, largo + 0.5, 0.5))
-plt.yticks(np.arange(0, ancho + 0.5, 0.5))
-plt.grid(True)
-plt.gca().set_aspect('equal', adjustable='box')
-plt.legend()
-plt.show()
+    fig, ax = plt.subplots(figsize=(6, 6))
+    ax.scatter(x_coords, y_coords, s=200, c="orange", edgecolors="black", label="Luminaria")
+    ax.set_title("Distribución de luminarias en planta")
+    ax.set_xlabel("Largo (m)")
+    ax.set_ylabel("Ancho (m)")
+    ax.set_xlim(0, largo)
+    ax.set_ylim(0, ancho)
+    ax.set_aspect('equal', adjustable='box')
+    ax.grid(True)
+    ax.legend()
+    st.pyplot(fig)
