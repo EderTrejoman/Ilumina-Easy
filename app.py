@@ -109,7 +109,7 @@ if uploaded_file is not None:
 
     A = tabla_A[idx_cat][idx_cond]
     B = tabla_B[idx_cat]
-    fm = round(math.exp(-A * (t ** B)), 3)
+    fm = round(math.exp(-A * ((t / 12) ** B)), 3)
     st.success(f"✅ FM calculado: {fm}")
 
     # Extracción de CU desde .IES
