@@ -96,94 +96,21 @@ if uploaded_file is not None:
     st.subheader("💡 Nivel de iluminancia requerido")
 
     areas_nom = {
-        "Oficina o aula": 300,
-        "Pasillo o circulación": 100,
-        "Área exterior": 20,
-        "Archivo o biblioteca": 200,
-        "Recepción": 150,
-        "Escaleras": 150,
-        "Área de producción detallada": 500,
-        "Área de inspección o precisión": 750,
+        "Área de trabajo en oficina": 300,
+        "Salones de clase": 300,
+        "Áreas de circulación y pasillos": 100,
+        "Áreas exteriores": 20,
+        "Áreas de archivo y bibliotecas": 200,
+        "Áreas de recepción": 150,
+        "Escaleras y rampas": 150,
+        "Áreas de producción (detallada)": 500,
+        "Áreas de inspección o precisión": 750,
         "Otro (ingresar manual)": None
     }
 
-    tipo_area = st.selectbox("Selecciona el tipo de área", list(areas_nom.keys()))
+    tipo_area = st.selectbox("Selecciona el tipo de área según la NOM-025-STPS-2008", list(areas_nom.keys()))
     if areas_nom[tipo_area] is None:
         lux_requerido = st.number_input("Ingresa iluminancia requerida (lux)", value=200.0)
     else:
         lux_requerido = areas_nom[tipo_area]
-
-    # Factor de mantenimiento
-    st.subheader("🛠 Cálculo del Factor de Mantenimiento (FM)")
-
-    st.markdown("""
-    El **FM** (factor de mantenimiento) considera la reducción de luz con el tiempo por polvo, suciedad o envejecimiento del sistema.
-    Depende de la **categoría de mantenimiento**, la **condición del ambiente** y el **tiempo de uso**.
-    """)
-
-    categorias = ["I", "II", "III", "IV", "V", "VI"]
-    condiciones = ["Muy limpio", "Limpio", "Medio limpio", "Sucio", "Muy sucio"]
-
-    categoria = st.selectbox("Categoría de mantenimiento", categorias)
-    condicion = st.selectbox("Condición del ambiente", condiciones)
-    t = st.number_input("Tiempo de operación (meses)", min_value=1.0, value=12.0)
-
-    idx_cat = categorias.index(categoria)
-    idx_cond = condiciones.index(condicion)
-
-    tabla_B = [0.69, 0.62, 0.70, 0.72, 0.83, 0.88]
-    tabla_A = [
-        [0.038, 0.071, 0.111, 0.162, 0.301],
-        [0.033, 0.068, 0.102, 0.147, 0.188],
-        [0.079, 0.106, 0.143, 0.184, 0.236],
-        [0.070, 0.131, 0.214, 0.314, 0.452],
-        [0.078, 0.128, 0.190, 0.249, 0.321],
-        [0.076, 0.145, 0.218, 0.284, 0.396]
-    ]
-
-    A = tabla_A[idx_cat][idx_cond]
-    B = tabla_B[idx_cat]
-    fm = round(math.exp(-A * (t ** B)), 3)
-    st.success(f"✅ FM calculado: {fm}")
-
-    # Cálculo de luminarias
-    st.subheader("🔢 Número de luminarias necesarias")
-    n_estimado = math.ceil((area * lux_requerido) / (flujo_total * cu_estimado * fm))
-    n_real = math.ceil((area * lux_requerido) / (flujo_total * cu_real * fm))
-
-    st.write(f"💡 Luminarias con CU estimado: {n_estimado}")
-    st.write(f"💡 Luminarias con CU real (.IES): {n_real}")
-    st.write(f"🔻 Diferencia: {n_estimado - n_real} luminarias")
-
-    # Modo inverso
-    st.subheader("🔁 ¿Qué lux se obtiene con cierto número de luminarias?")
-    n_usuario = st.number_input("Número de luminarias disponibles", min_value=1, value=4)
-
-    lux_real = round((n_usuario * flujo_total * cu_real * fm) / area, 2)
-    lux_estimado = round((n_usuario * flujo_total * cu_estimado * fm) / area, 2)
-
-    st.write(f"🔦 Lux con CU real: {lux_real} lux")
-    st.write(f"🔦 Lux con CU estimado: {lux_estimado} lux")
-
-    # Visualización 2D
-    st.subheader("🧭 Distribución 2D de luminarias en planta")
-    n_x = st.number_input("Luminarias en eje X (largo)", min_value=1, value=2)
-    n_y = st.number_input("Luminarias en eje Y (ancho)", min_value=1, value=2)
-
-    x_spacing = largo / (n_x + 1)
-    y_spacing = ancho / (n_y + 1)
-
-    x_coords = [x_spacing * (j + 1) for j in range(n_x) for i in range(n_y)]
-    y_coords = [y_spacing * (i + 1) for j in range(n_x) for i in range(n_y)]
-
-    fig, ax = plt.subplots(figsize=(6, 6))
-    ax.scatter(x_coords, y_coords, s=200, c="orange", edgecolors="black", label="Luminaria")
-    ax.set_title("Distribución de luminarias en planta")
-    ax.set_xlabel("Largo (m)")
-    ax.set_ylabel("Ancho (m)")
-    ax.set_xlim(0, largo)
-    ax.set_ylim(0, ancho)
-    ax.set_aspect('equal', adjustable='box')
-    ax.grid(True)
-    ax.legend()
-    st.pyplot(fig)
+        st.info(f"🔎 Iluminancia requerida según NOM-025-STPS-2008: {lux_requerido} lux")
