@@ -135,7 +135,8 @@ if uploaded_file is not None:
         ang_rad = np.radians(angulos[:n])
         candelas_utiles = np.array(candelas[:n]) * np.sin(ang_rad) * 2 * np.pi * np.cos(ang_rad)
         flujo_util = np.trapz(candelas_utiles, ang_rad)
-        flujo_total = st.number_input("🔢 Flujo total declarado por la luminaria (lm)", value=1200.0)
+        flujo_total = round(np.trapz(np.array(candelas[:n]) * np.sin(ang_rad) * 2 * np.pi * np.cos(ang_rad), ang_rad), 2)
+        st.info(f"🔆 Flujo luminoso calculado desde archivo .IES: {flujo_total} lm")
         cu_real = round(flujo_util / flujo_total, 3)
         st.success(f"✅ CU calculado desde .IES (real): {cu_real}")
 
