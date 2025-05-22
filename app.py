@@ -68,9 +68,21 @@ if uploaded_file is not None:
     h_montaje = st.number_input("Altura de montaje de la luminaria (m)", min_value=0.0, max_value=200.0, value=3.0, step=0.01, format="%.2f")
     h_trabajo = st.number_input("Altura del plano de trabajo (m)", min_value=0.0, max_value=200.0, value=0.8, step=0.01, format="%.2f")
 
+    st.markdown("""
+    - **Altura de montaje:** desde el piso hasta el centro de la luminaria.
+    - **Altura del plano de trabajo:** suele ser 0.8 m (mesas, escritorios, bancos de trabajo).
+    """)
+
     ρcc = st.number_input("Reflectancia techo (ρcc)", min_value=0.0, max_value=1.0, value=0.7)
     ρpp = st.number_input("Reflectancia paredes (ρpp)", min_value=0.0, max_value=1.0, value=0.5)
     ρcf = st.number_input("Reflectancia piso (ρcf)", min_value=0.0, max_value=1.0, value=0.2)
+
+    st.markdown("""
+    ℹ️ Las **reflectancias** representan el porcentaje de luz reflejada por las superficies del recinto:
+    - ρcc: techo (valores altos si es blanco o muy claro)
+    - ρpp: paredes (color claro o medio)
+    - ρcf: piso (oscuro o claro según material)
+    """)
 
     area = largo * ancho
     h_efectiva = h_montaje - h_trabajo
@@ -104,6 +116,11 @@ if uploaded_file is not None:
     # Factor de mantenimiento
     st.subheader("🛠 Cálculo del Factor de Mantenimiento (FM)")
 
+    st.markdown("""
+    El **FM** (factor de mantenimiento) considera la reducción de luz con el tiempo por polvo, suciedad o envejecimiento del sistema.
+    Depende de la **categoría de mantenimiento**, la **condición del ambiente** y el **tiempo de uso**.
+    """)
+
     categorias = ["I", "II", "III", "IV", "V", "VI"]
     condiciones = ["Muy limpio", "Limpio", "Medio limpio", "Sucio", "Muy sucio"]
 
@@ -128,3 +145,45 @@ if uploaded_file is not None:
     B = tabla_B[idx_cat]
     fm = round(math.exp(-A * (t ** B)), 3)
     st.success(f"✅ FM calculado: {fm}")
+
+    # Cálculo de luminarias
+    st.subheader("🔢 Número de luminarias necesarias")
+    n_estimado = math.ceil((area * lux_requerido) / (flujo_total * cu_estimado * fm))
+    n_real = math.ceil((area * lux_requerido) / (flujo_total * cu_real * fm))
+
+    st.write(f"💡 Luminarias con CU estimado: {n_estimado}")
+    st.write(f"💡 Luminarias con CU real (.IES): {n_real}")
+    st.write(f"🔻 Diferencia: {n_estimado - n_real} luminarias")
+
+    # Modo inverso
+    st.subheader("🔁 ¿Qué lux se obtiene con cierto número de luminarias?")
+    n_usuario = st.number_input("Número de luminarias disponibles", min_value=1, value=4)
+
+    lux_real = round((n_usuario * flujo_total * cu_real * fm) / area, 2)
+    lux_estimado = round((n_usuario * flujo_total * cu_estimado * fm) / area, 2)
+
+    st.write(f"🔦 Lux con CU real: {lux_real} lux")
+    st.write(f"🔦 Lux con CU estimado: {lux_estimado} lux")
+
+    # Visualización 2D
+    st.subheader("🧭 Distribución 2D de luminarias en planta")
+    n_x = st.number_input("Luminarias en eje X (largo)", min_value=1, value=2)
+    n_y = st.number_input("Luminarias en eje Y (ancho)", min_value=1, value=2)
+
+    x_spacing = largo / (n_x + 1)
+    y_spacing = ancho / (n_y + 1)
+
+    x_coords = [x_spacing * (j + 1) for j in range(n_x) for i in range(n_y)]
+    y_coords = [y_spacing * (i + 1) for j in range(n_x) for i in range(n_y)]
+
+    fig, ax = plt.subplots(figsize=(6, 6))
+    ax.scatter(x_coords, y_coords, s=200, c="orange", edgecolors="black", label="Luminaria")
+    ax.set_title("Distribución de luminarias en planta")
+    ax.set_xlabel("Largo (m)")
+    ax.set_ylabel("Ancho (m)")
+    ax.set_xlim(0, largo)
+    ax.set_ylim(0, ancho)
+    ax.set_aspect('equal', adjustable='box')
+    ax.grid(True)
+    ax.legend()
+    st.pyplot(fig)
