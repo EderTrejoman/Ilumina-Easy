@@ -1,11 +1,25 @@
+# CALCULADORA DE ILUMINACION NOM-025-STPS-2008 + .IES
+# Autor: Eder Helio Martínez Trejo
+
 import streamlit as st
 import numpy as np
 import math
 import matplotlib.pyplot as plt
 
 st.set_page_config(page_title="Calculadora de Iluminación - NOM-025 + .IES")
-st.title("🔆 Calculadora de Iluminación")
-st.caption("Autor: Eder Helio Martínez Trejo — Basado en NOM-025-STPS-2008 y archivos .IES")
+st.title("🔆 Calculadora Profesional de Iluminación")
+st.caption("Desarrollado por Eder Helio Martínez Trejo")
+
+# INTRODUCCIÓN Y OBJETIVO
+st.markdown("""
+### 🎯 Objetivo
+Esta calculadora está diseñada para estimar de forma profesional el número de luminarias necesarias según la **NOM-025-STPS-2008**, considerando:
+- El **CU real** extraído desde archivos `.IES`
+- El **CU estimado** por reflectancias y RCR
+- Las condiciones del recinto, mantenimiento y tipo de área
+
+El objetivo es facilitar decisiones técnicas fundamentadas y visuales sobre eficiencia luminosa en espacios laborales.
+""")
 
 uploaded_file = st.file_uploader("📂 Sube tu archivo .IES", type=["ies"])
 
@@ -17,7 +31,7 @@ if uploaded_file is not None:
         for i, line in enumerate(lines[:40]):
             st.text(f"{i+1:02d}: {line.strip()}")
 
-    # Extracción de ángulos y candelas
+    # Extracción de CU desde .IES
     angulos = []
     candelas = []
 
@@ -46,11 +60,13 @@ if uploaded_file is not None:
     else:
         st.error("⚠ No se pudo extraer CU real. Asegúrate de que el archivo tenga ángulos y candelas.")
 
+    # Dimensiones del recinto
     st.subheader("📏 Parámetros del recinto")
-    largo = st.number_input("Largo del recinto (m)", value=4.0)
-    ancho = st.number_input("Ancho del recinto (m)", value=4.0)
-    h_montaje = st.number_input("Altura de montaje (m)", value=3.0)
-    h_trabajo = st.number_input("Altura del plano de trabajo (m)", value=0.8)
+
+    largo = st.number_input("Largo del recinto (m)", min_value=0.0, max_value=200.0, value=4.0, step=0.01, format="%.2f")
+    ancho = st.number_input("Ancho del recinto (m)", min_value=0.0, max_value=200.0, value=4.0, step=0.01, format="%.2f")
+    h_montaje = st.number_input("Altura de montaje de la luminaria (m)", min_value=0.0, max_value=200.0, value=3.0, step=0.01, format="%.2f")
+    h_trabajo = st.number_input("Altura del plano de trabajo (m)", min_value=0.0, max_value=200.0, value=0.8, step=0.01, format="%.2f")
 
     ρcc = st.number_input("Reflectancia techo (ρcc)", min_value=0.0, max_value=1.0, value=0.7)
     ρpp = st.number_input("Reflectancia paredes (ρpp)", min_value=0.0, max_value=1.0, value=0.5)
@@ -64,17 +80,28 @@ if uploaded_file is not None:
 
     st.info(f"📐 RCR: {rcr} — CU estimado: {cu_estimado}")
 
+    # Nivel de iluminancia
     st.subheader("💡 Nivel de iluminancia requerido")
-    tipo_area = st.selectbox("Tipo de área según NOM-025", ["Oficina / Aula (300 lux)", "Pasillo (100 lux)", "Exterior (20 lux)", "Otro (ingresar manual)"])
-    if tipo_area == "Oficina / Aula (300 lux)":
-        lux_requerido = 300
-    elif tipo_area == "Pasillo (100 lux)":
-        lux_requerido = 100
-    elif tipo_area == "Exterior (20 lux)":
-        lux_requerido = 20
-    else:
-        lux_requerido = st.number_input("Ingresa nivel de iluminancia (lux)", value=200)
 
+    areas_nom = {
+        "Oficina o aula": 300,
+        "Pasillo o circulación": 100,
+        "Área exterior": 20,
+        "Archivo o biblioteca": 200,
+        "Recepción": 150,
+        "Escaleras": 150,
+        "Área de producción detallada": 500,
+        "Área de inspección o precisión": 750,
+        "Otro (ingresar manual)": None
+    }
+
+    tipo_area = st.selectbox("Selecciona el tipo de área", list(areas_nom.keys()))
+    if areas_nom[tipo_area] is None:
+        lux_requerido = st.number_input("Ingresa iluminancia requerida (lux)", value=200.0)
+    else:
+        lux_requerido = areas_nom[tipo_area]
+
+    # Factor de mantenimiento
     st.subheader("🛠 Cálculo del Factor de Mantenimiento (FM)")
 
     categorias = ["I", "II", "III", "IV", "V", "VI"]
@@ -101,53 +128,3 @@ if uploaded_file is not None:
     B = tabla_B[idx_cat]
     fm = round(math.exp(-A * (t ** B)), 3)
     st.success(f"✅ FM calculado: {fm}")
-
-    # Cálculo de luminarias
-    n_estimado = math.ceil((area * lux_requerido) / (flujo_total * cu_estimado * fm))
-    n_real = math.ceil((area * lux_requerido) / (flujo_total * cu_real * fm))
-
-    st.subheader("🔢 Resultado: número de luminarias necesarias")
-    st.write(f"💡 Con CU estimado: {n_estimado} luminarias")
-    st.write(f"💡 Con CU real (.IES): {n_real} luminarias")
-    st.write(f"🔻 Diferencia: {n_estimado - n_real} luminarias")
-
-    st.subheader("🔁 Modo inverso: ¿qué lux logro con X luminarias?")
-    n_usuario = st.number_input("Número de luminarias disponibles", min_value=1, value=4)
-
-    lux_real = round((n_usuario * flujo_total * cu_real * fm) / area, 2)
-    lux_estimado = round((n_usuario * flujo_total * cu_estimado * fm) / area, 2)
-
-    st.write(f"🔦 Lux con CU real: {lux_real} lux")
-    st.write(f"🔦 Lux con CU estimado: {lux_estimado} lux")
-
-    if lux_real < lux_requerido:
-        st.warning(f"⚠ CU real: por debajo del requerido ({lux_requerido} lux)")
-    else:
-        st.success("✅ CU real cumple el nivel de iluminancia.")
-
-    if lux_estimado < lux_requerido:
-        st.warning(f"⚠ CU estimado: por debajo del requerido ({lux_requerido} lux)")
-    else:
-        st.success("✅ CU estimado cumple el nivel de iluminancia.")
-
-    st.subheader("📊 Visualización 2D de luminarias")
-    n_x = st.number_input("Luminarias en eje X (largo)", min_value=1, value=2)
-    n_y = st.number_input("Luminarias en eje Y (ancho)", min_value=1, value=2)
-
-    x_spacing = largo / (n_x + 1)
-    y_spacing = ancho / (n_y + 1)
-
-    x_coords = [x_spacing * (j + 1) for j in range(n_x) for i in range(n_y)]
-    y_coords = [y_spacing * (i + 1) for j in range(n_x) for i in range(n_y)]
-
-    fig, ax = plt.subplots(figsize=(6, 6))
-    ax.scatter(x_coords, y_coords, s=200, c="orange", edgecolors="black", label="Luminaria")
-    ax.set_title("Distribución de luminarias en planta")
-    ax.set_xlabel("Largo (m)")
-    ax.set_ylabel("Ancho (m)")
-    ax.set_xlim(0, largo)
-    ax.set_ylim(0, ancho)
-    ax.set_aspect('equal', adjustable='box')
-    ax.grid(True)
-    ax.legend()
-    st.pyplot(fig)
