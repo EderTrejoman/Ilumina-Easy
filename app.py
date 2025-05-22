@@ -142,7 +142,9 @@ if uploaded_file is not None:
         # Cálculo de luminarias necesarias
         st.subheader("🔢 Número de luminarias necesarias")
         n_real = math.ceil((area * lux_requerido) / (flujo_total * cu_real * fm))
+        lux_real_total = round((n_real * flujo_total * cu_real * fm) / area, 2)
         st.write(f"💡 Luminarias necesarias con CU real y FM: {n_real}")
+        st.write(f"🔦 Lux resultante con esas luminarias: {lux_real_total} lux")
 
         # Modo inverso
         st.subheader("🔁 ¿Qué lux se obtiene con cierto número de luminarias?")
