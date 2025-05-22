@@ -153,28 +153,6 @@ if uploaded_file is not None:
         lux_resultante = round((n_usuario * flujo_total * cu_real * fm) / area, 2)
         st.write(f"🔦 Lux obtenido con {n_usuario} luminarias: {lux_resultante} lux")
 
-        # Visualización 2D
-        st.subheader("🧭 Distribución 2D de luminarias en planta")
-        st.markdown("ℹ️ Especifica cuántas luminarias se colocarán a lo largo (X) y a lo ancho (Y) del recinto. Valores enteros únicamente.")
-        n_x = st.number_input("Luminarias en eje X (largo)", min_value=1, value=2, step=1)
-        n_y = st.number_input("Luminarias en eje Y (ancho)", min_value=1, value=2, step=1)
-
-        x_spacing = largo / (n_x + 1)
-        y_spacing = ancho / (n_y + 1)
-
-        x_coords = [x_spacing * (j + 1) for j in range(n_x) for i in range(n_y)]
-        y_coords = [y_spacing * (i + 1) for j in range(n_x) for i in range(n_y)]
-
-        fig, ax = plt.subplots(figsize=(6, 6))
-        ax.scatter(x_coords, y_coords, s=200, c="orange", edgecolors="black", label="Luminaria")
-        ax.set_title("Distribución de luminarias en planta")
-        ax.set_xlabel("Largo (m)")
-        ax.set_ylabel("Ancho (m)")
-        ax.set_xlim(0, largo)
-        ax.set_ylim(0, ancho)
-        ax.set_aspect('equal', adjustable='box')
-        ax.grid(True)
-        ax.legend()
-        st.pyplot(fig)
+        # Se eliminó la visualización 2D a petición del usuario
     else:
         st.error("⚠ No se pudo extraer CU real. Asegúrate de que el archivo tenga ángulos y candelas.")
