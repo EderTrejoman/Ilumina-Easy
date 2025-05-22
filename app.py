@@ -132,10 +132,20 @@ if uploaded_file is not None:
 
     if angulos and candelas:
         n = min(len(angulos), len(candelas))
-        ang_rad = np.radians(angulos[:n])
-        candelas_utiles = np.array(candelas[:n]) * np.sin(ang_rad) * 2 * np.pi * np.cos(ang_rad)
-        flujo_util = np.trapz(candelas_utiles, ang_rad)
-        flujo_total = round(np.trapz(np.array(candelas[:n]) * np.sin(ang_rad) * 2 * np.pi * np.cos(ang_rad), ang_rad), 2)
+        angulos = angulos[:n]
+        candelas = candelas[:n]
+
+        ang_rad = np.radians(angulos)
+        candelas_array = np.array(candelas)
+
+        # Flujo total con todos los ángulos
+        flujo_total = round(np.trapz(candelas_array * np.sin(ang_rad) * 2 * np.pi * np.cos(ang_rad), ang_rad), 2)
+
+        # Flujo útil entre 0° y 90°
+        ang_utiles_idx = [i for i, ang in enumerate(angulos) if ang <= 90]
+        ang_rad_util = ang_rad[ang_utiles_idx]
+        cand_util = candelas_array[ang_utiles_idx]
+        flujo_util = round(np.trapz(cand_util * np.sin(ang_rad_util) * 2 * np.pi * np.cos(ang_rad_util), ang_rad_util), 2)
         st.info(f"🔆 Flujo luminoso calculado desde archivo .IES: {flujo_total} lm")
         cu_real = round(flujo_util / flujo_total, 3)
         st.success(f"✅ CU calculado desde .IES (real): {cu_real}")
