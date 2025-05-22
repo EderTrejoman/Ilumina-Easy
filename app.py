@@ -147,7 +147,8 @@ if uploaded_file is not None:
         cand_util = candelas_array[ang_utiles_idx]
         flujo_util = round(np.trapz(cand_util * np.sin(ang_rad_util) * 2 * np.pi * np.cos(ang_rad_util), ang_rad_util), 2)
         st.info(f"🔆 Flujo luminoso calculado desde archivo .IES: {flujo_total} lm")
-        cu_real = round((flujo_util / flujo_total) * (1 + np.random.uniform(-0.005, 0.005)), 3)
+        cu_raw = (flujo_util / flujo_total) * (1 + np.random.uniform(-0.005, 0.005))
+        cu_real = round(min(cu_raw, 1.0), 3)
         st.success(f"✅ CU calculado desde .IES (real): {cu_real}")
 
         # Cálculo de luminarias necesarias
