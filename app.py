@@ -13,15 +13,15 @@ uploaded_file = st.file_uploader("", type="ies")
 st.markdown("""
 **ℹ️ Información para el usuario:**
 
-- **Altura del plano de trabajo (hrc):** es la distancia desde el piso hasta la superficie donde se realiza la tarea visual (por ejemplo, un escritorio o mesa). Generalmente se asume **0.80 m** para oficinas o aulas.
-- **Altura de montaje (hcc):** es la distancia desde el piso hasta el centro de la luminaria instalada en el techo.
-- **Altura efectiva (hfc):** es la diferencia entre hcc y hrc, y representa la altura útil para el cálculo de iluminación.
+- **Altura del plano de trabajo:** es la distancia desde el piso hasta la superficie donde se realiza la tarea visual (por ejemplo, un escritorio o mesa). Generalmente se asume **0.80 m** para oficinas o aulas.
+- **Altura de montaje:** es la distancia desde el piso hasta el centro de la luminaria instalada en el techo.
+- **Altura efectiva:** es la diferencia entre la altura de montaje y la altura del plano de trabajo, y representa la altura útil para el cálculo de iluminación.
 """)
 
-hcc = st.number_input("Ingrese la altura de montaje (hcc) en metros", min_value=0.0, value=2.5, step=0.1)
-hrc = st.number_input("Ingrese la altura del plano de trabajo (hrc) en metros", min_value=0.0, value=0.8, step=0.1)
-hfc = hcc - hrc
-st.markdown(f"**Altura efectiva (hfc):** {hfc:.2f} m")
+altura_montaje = st.number_input("Ingrese la altura de montaje en metros", min_value=0.0, value=2.5, step=0.1)
+altura_trabajo = st.number_input("Ingrese la altura del plano de trabajo en metros", min_value=0.0, value=0.8, step=0.1)
+altura_efectiva = altura_montaje - altura_trabajo
+st.markdown(f"**Altura efectiva:** {altura_efectiva:.2f} m")
 
 def leer_ies(file):
     lines = file.read().decode('latin1').splitlines()
@@ -85,6 +85,17 @@ def calcular_cu(C, theta_vals, flujo_total):
 def calcular_fm(A, B, t):
     return np.exp(-A * (t ** B))
 
+niveles_nom = {
+    "Oficina": 300,
+    "Aula": 300,
+    "Pasillo": 100,
+    "Almacén": 150,
+    "Taller": 500,
+    "Área exterior": 20,
+    "Laboratorio": 750,
+    "Sala de cómputo": 300
+}
+
 if uploaded_file is not None:
     try:
         C, theta, flujo_total, nh, nv = leer_ies(uploaded_file)
@@ -105,36 +116,38 @@ if uploaded_file is not None:
         area = largo * ancho
         st.markdown(f"**Área total:** {area:.2f} m²")
 
+        tipo_area = st.selectbox("Seleccione el tipo de área según la NOM-025-STPS-2008", list(niveles_nom.keys()))
+        nivel_lux = niveles_nom[tipo_area]
+        st.markdown(f"**Nivel de iluminación requerido:** {nivel_lux} lux")
+
         st.markdown("---")
         st.markdown("### ⚙️ Parámetros de mantenimiento")
 
-        t = st.number_input("Tiempo de operación (meses)", min_value=0.0, value=6.0, step=1.0)
+        tiempo_meses = st.number_input("Tiempo de operación (meses)", min_value=0.0, value=6.0, step=1.0)
+        t = tiempo_meses / 12.0
 
         categorias = {
-            "I": (0.069, 0.883),
-            "II": (0.062, 0.88),
-            "III": (0.070, 0.72),
-            "IV": (0.083, 0.72),
-            "V": (0.088, 0.72),
-            "VI": (0.088, 0.72),
+            "I": (0.301, 0.069),
+            "II": (0.188, 0.062),
+            "III": (0.147, 0.070),
+            "IV": (0.103, 0.083),
+            "V": (0.084, 0.088),
+            "VI": (0.076, 0.088),
         }
 
-        categoria = st.selectbox("Categoría de mantenimiento (superior)", list(categorias.keys()))
+        descripcion_categorias = {
+            "I": "Nada",
+            "II": "Transparente con ≥15% de luz hacia arriba",
+            "III": "Transparente con <15% de luz hacia arriba",
+            "IV": "Opaca con ≥15% de luz hacia arriba",
+            "V": "Opaca con <15% de luz hacia arriba",
+            "VI": "Opaca sin aberturas",
+        }
+
+        categoria = st.selectbox("Categoría de mantenimiento (superior)", list(categorias.keys()), format_func=lambda x: f"{x} - {descripcion_categorias[x]}")
         A, B = categorias[categoria]
         FM = calcular_fm(A, B, t)
         st.markdown(f"**Factor de mantenimiento (FM):** {FM:.3f}")
-
-        st.markdown("### 📊 Tabla de categorías de mantenimiento")
-        st.markdown("| Categoría | Descripción superior | Descripción inferior | A | B |")
-        st.markdown("|-----------|----------------------|-----------------------|----|----|")
-        st.markdown("| I         | Nada                 | Nada                  | 0.069 | 0.883 |")
-        st.markdown("| II        | Transparente ≥15% luz arriba | Rejillas             | 0.062 | 0.880 |")
-        st.markdown("| III       | Transparente <15% luz arriba | Rejillas o reflectores | 0.070 | 0.720 |")
-        st.markdown("| IV        | Opaca con 15% luz arriba | Translúcida con aberturas | 0.083 | 0.720 |")
-        st.markdown("| V         | Opaca con <15% luz arriba | Translúcida sin aberturas | 0.088 | 0.720 |")
-        st.markdown("| VI        | Opaca sin aberturas | Opaca sin aberturas    | 0.088 | 0.720 |")
-
-        nivel_lux = st.number_input("Nivel de iluminación requerido (lux)", min_value=0, value=300, step=10)
 
         num_luminarias = (nivel_lux * area) / (cu * flujo_total * FM)
         st.markdown(f"### 🔢 Luminarias necesarias: **{round(num_luminarias, 1)}**")
