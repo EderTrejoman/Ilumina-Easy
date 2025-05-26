@@ -49,10 +49,11 @@ if archivo:
 
     if angulos and candela_values:
         angulos = np.array(angulos)
-        if all(len(row) == len(candela_values[0]) for row in candela_values):
-            candelas = np.mean(np.array(candela_values), axis=0)  # Promedio por ángulo
+        longitudes = [len(row) for row in candela_values]
+        if len(set(longitudes)) == 1:
+            candelas = np.mean(np.array(candela_values), axis=0)
         else:
-            candelas = np.array(candela_values[0])  # Usar solo el primer plano
+            candelas = np.array(candela_values[0])
 
         n = min(len(angulos), len(candelas))
         ang_rad = np.radians(angulos[:n])
@@ -61,7 +62,7 @@ if archivo:
             flujo_total = flujo_real_extraido
             cu_resultado = flujo_util / flujo_total
         else:
-            flujo_total = flujo_util * 1.2  # Supone que el flujo útil es el 85% del total para estimación técnica
+            flujo_total = flujo_util * 1.2
             cu_resultado = round(flujo_util / flujo_total, 3)
 
         st.success(f"📊 CU calculado desde .IES: {round(cu_resultado, 3)}")
@@ -119,4 +120,3 @@ if cu_resultado is not None and flujo_total is not None:
     n_disp = st.number_input("Luminarias disponibles", 1, value=n_luminarias)
     lux_resultante = round((n_disp * flujo_total * cu_resultado * FM) / area, 2)
     st.write(f"🔦 Lux resultantes: **{lux_resultante} lux**")
-
