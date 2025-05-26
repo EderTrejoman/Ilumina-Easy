@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-print("🔧 Suba el archivo .IES para calcular el CU")
+print("\U0001F527 Suba el archivo .IES para calcular el CU")
 
 # === Leer archivo .IES ===
 def leer_ies(nombre_archivo):
@@ -43,10 +43,13 @@ def leer_ies(nombre_archivo):
 
     expected_vals = num_ang_horiz * num_ang_vert
     if len(candela_vals) != expected_vals:
-        print(f"⚠️ Aviso: se esperaban {expected_vals} candelas, pero se encontraron {len(candela_vals)}")
+        print(f"\u26a0\ufe0f Aviso: se esperaban {expected_vals} candelas, pero se encontraron {len(candela_vals)}")
         if len(candela_vals) % num_ang_vert == 0:
             num_ang_horiz = len(candela_vals) // num_ang_vert
-            print(f"🔁 Ajustando número de planos horizontales a {num_ang_horiz}")
+            print(f"\U0001f501 Ajustando número de planos horizontales a {num_ang_horiz}")
+        elif len(candela_vals) % num_ang_horiz == 0:
+            num_ang_vert = len(candela_vals) // num_ang_horiz
+            print(f"\U0001f501 Ajustando número de ángulos verticales a {num_ang_vert}")
         else:
             raise ValueError("La cantidad de candelas no coincide con los ángulos especificados.")
 
@@ -61,8 +64,8 @@ def calcular_cu(C, theta_vals, flujo_total):
     theta_rad = np.radians(theta_vals[mask])
     I_avg = np.mean(C, axis=0)[mask]
 
-    from numpy import trapezoid
-    flujo_util = trapezoid(I_avg * np.sin(theta_rad) * 2 * np.pi * np.cos(theta_rad), theta_rad)
+    from numpy import trapz
+    flujo_util = trapz(I_avg * np.sin(theta_rad) * 2 * np.pi * np.cos(theta_rad), theta_rad)
     CU = flujo_util / flujo_total
     return CU, flujo_util
 
@@ -71,19 +74,19 @@ def calcular_cu(C, theta_vals, flujo_total):
 if __name__ == "__main__":
     import sys
     if len(sys.argv) < 2:
-        print("❗ Error: Proporcione el nombre del archivo .IES como argumento.")
+        print("\u2757 Error: Proporcione el nombre del archivo .IES como argumento.")
     else:
         archivo = sys.argv[1]
         try:
             C, theta, flujo_total, nh, nv = leer_ies(archivo)
             cu, flujo_util = calcular_cu(C, theta, flujo_total)
 
-            print(f"\n✅ Archivo: {archivo}")
-            print(f"📏 Ángulos verticales: {nv}")
-            print(f"🧭 Planos horizontales: {nh}")
-            print(f"🔸 Flujo útil: {round(flujo_util, 2)} lm")
-            print(f"🔸 Flujo total: {flujo_total} lm")
-            print(f"🔹 CU real calculado: {round(cu, 3)}")
+            print(f"\n\u2705 Archivo: {archivo}")
+            print(f"\U0001f4cf Ángulos verticales: {nv}")
+            print(f"\U0001f9ed Planos horizontales: {nh}")
+            print(f"\U0001f538 Flujo útil: {round(flujo_util, 2)} lm")
+            print(f"\U0001f538 Flujo total: {flujo_total} lm")
+            print(f"\U0001f539 CU real calculado: {round(cu, 3)}")
 
         except Exception as e:
-            print(f"❌ Error al procesar el archivo .IES: {e}")
+            print(f"\u274c Error al procesar el archivo .IES: {e}")
