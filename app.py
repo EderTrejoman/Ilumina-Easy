@@ -9,7 +9,8 @@ st.title("🔆 Calculadora de CU desde archivo .IES")
 
 st.markdown("""
 ## 📝 Introducción
-Esta aplicación permite calcular el **Coeficiente de Utilización (CU)** y estimar el número de luminarias necesarias con base en la **NOM-025-STPS-2008**, utilizando archivos fotométricos en formato **.IES**.
+El diseño de sistemas de iluminación eficientes y normativamente correctos es esencial en cualquier entorno laboral o educativo. Esta herramienta permite calcular el **Coeficiente de Utilización (CU)** a partir de archivos **.IES**, además de estimar el número de luminarias necesarias conforme a la **NOM-025-STPS-2008**. 
+
 
 ## 🎯 Objetivo
 Brindar una herramienta práctica y precisa desarrollada por **alumnos de 8º semestre de Ingeniería Eléctrica del ITSH** para facilitar el diseño de sistemas de iluminación.
