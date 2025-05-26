@@ -1,7 +1,3 @@
-# CALCULADORA PROFESIONAL DE ILUMINACIÓN - STREAMLIT
-# Autor: Eder Helio Martínez Trejo
-# Basado en NOM-025-STPS-2008 y archivos .IES
-
 import streamlit as st
 import numpy as np
 import math
@@ -18,7 +14,34 @@ if archivo:
     lines = archivo.getvalue().decode("latin1").splitlines()
     angulos = []
     candelas = []
+    flujo_real_extraido = None
     for line in lines:
+        if "[LUMINAIRE]" in line.upper():
+            continue
+        if "[MORE]" in line.upper():
+            continue
+        if "[OTHER]" in line.upper():
+            continue
+        if "TILT" in line.upper():
+            continue
+        if "[LAMP]" in line.upper():
+            continue
+        if "[LUMCAT]" in line.upper():
+            continue
+        if "[LUMINAIRE]" in line.upper():
+            continue
+
+        # Buscar flujo total en líneas con 'lumens' o número alto
+        if flujo_real_extraido is None and any(x in line.lower() for x in ["lumens", "lumen"]):
+            for word in line.split():
+                try:
+                    lumens = float(word)
+                    if lumens > 100:
+                        flujo_real_extraido = lumens
+                        break
+                except:
+                    continue
+
         valores = line.strip().split()
         try:
             nums = [float(x) for x in valores]
@@ -36,7 +59,10 @@ if archivo:
         n = min(len(angulos), len(candelas))
         ang_rad = np.radians(angulos[:n])
         flujo_util = np.trapz(np.array(candelas[:n]) * np.sin(ang_rad) * 2 * np.pi * np.cos(ang_rad), ang_rad)
-        flujo_total = flujo_util / 0.85  # Asumimos un CU promedio para estimar el flujo si no viene
+        if flujo_real_extraido:
+            flujo_total = flujo_real_extraido
+        else:
+            flujo_total = flujo_util / 0.85
         cu_resultado = flujo_util / flujo_total
         st.success(f"📊 CU calculado desde .IES: {round(cu_resultado, 3)}")
         st.info(f"📤 Flujo luminoso estimado de la luminaria: {round(flujo_total)} lm")
