@@ -1,122 +1,89 @@
-import streamlit as st
 import numpy as np
-import math
+import matplotlib.pyplot as plt
 
-st.set_page_config(page_title="CU desde archivo .IES", layout="wide")
-st.title("📂 Cálculo de CU desde archivo .IES")
+print("🔧 Suba el archivo .IES para calcular el CU")
 
-# === Subir archivo ===
-archivo = st.file_uploader("Sube tu archivo .IES", type=["ies"])
+# === Leer archivo .IES ===
+def leer_ies(nombre_archivo):
+    with open(nombre_archivo, 'r', encoding='latin1') as f:
+        lines = f.readlines()
 
-cu_resultado = None
-flujo_total = None
-if archivo:
-    lines = archivo.getvalue().decode("latin1").splitlines()
-    angulos = []
-    candela_values = []
-    flujo_real_extraido = None
-    leyendo_angulos = False
-    leyendo_candelas = False
-
+    metadata = []
+    data_lines = []
     for line in lines:
-        if any(etq in line.upper() for etq in ["[LUMINAIRE]", "[MORE]", "[OTHER]", "TILT", "[LAMP]", "[LUMCAT]"]):
-            continue
+        if line.strip().startswith('TILT'):
+            tilt_index = lines.index(line)
+            metadata = lines[:tilt_index + 1]
+            data_lines = lines[tilt_index + 1:]
+            break
 
-        if flujo_real_extraido is None and any(x in line.lower() for x in ["lumens", "lumen"]):
-            for word in line.split():
-                try:
-                    lumens = float(word)
-                    if lumens > 100:
-                        flujo_real_extraido = lumens
-                        break
-                except:
-                    continue
+    header = data_lines[0].strip().split()
+    flujo_total = float(header[1])
+    num_ang_vert = int(header[3])
+    num_ang_horiz = int(header[4])
 
-        valores = line.strip().split()
+    angulo_vert = list(map(float, data_lines[2].strip().split()))
+    idx = 3
+    while len(angulo_vert) < num_ang_vert:
+        angulo_vert += list(map(float, data_lines[idx].strip().split()))
+        idx += 1
+
+    angulo_horiz = list(map(float, data_lines[idx].strip().split()))
+    idx += 1
+    while len(angulo_horiz) < num_ang_horiz:
+        angulo_horiz += list(map(float, data_lines[idx].strip().split()))
+        idx += 1
+
+    candela_vals = []
+    while idx < len(data_lines):
+        line_vals = data_lines[idx].strip().split()
+        if line_vals:
+            candela_vals += list(map(float, line_vals))
+        idx += 1
+
+    expected_vals = num_ang_horiz * num_ang_vert
+    if len(candela_vals) != expected_vals:
+        print(f"⚠️ Aviso: se esperaban {expected_vals} candelas, pero se encontraron {len(candela_vals)}")
+        if len(candela_vals) % num_ang_vert == 0:
+            num_ang_horiz = len(candela_vals) // num_ang_vert
+            print(f"🔁 Ajustando número de planos horizontales a {num_ang_horiz}")
+        else:
+            raise ValueError("La cantidad de candelas no coincide con los ángulos especificados.")
+
+    C = np.array(candela_vals).reshape((num_ang_horiz, num_ang_vert))
+    theta_vals = np.array(angulo_vert[:num_ang_vert])
+    return C, theta_vals, flujo_total, num_ang_horiz, num_ang_vert
+
+
+# === Calcular CU ===
+def calcular_cu(C, theta_vals, flujo_total):
+    mask = theta_vals <= 90
+    theta_rad = np.radians(theta_vals[mask])
+    I_avg = np.mean(C, axis=0)[mask]
+
+    from numpy import trapezoid
+    flujo_util = trapezoid(I_avg * np.sin(theta_rad) * 2 * np.pi * np.cos(theta_rad), theta_rad)
+    CU = flujo_util / flujo_total
+    return CU, flujo_util
+
+
+# === Ejecución ===
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv) < 2:
+        print("❗ Error: Proporcione el nombre del archivo .IES como argumento.")
+    else:
+        archivo = sys.argv[1]
         try:
-            nums = [float(x) for x in valores]
-        except:
-            continue
+            C, theta, flujo_total, nh, nv = leer_ies(archivo)
+            cu, flujo_util = calcular_cu(C, theta, flujo_total)
 
-        if not angulos and all(0 <= x <= 180 for x in nums):
-            angulos += nums
-            leyendo_angulos = True
-        elif leyendo_angulos and len(nums) == len(angulos):
-            candela_values.append(nums)
-            leyendo_candelas = True
-        elif leyendo_candelas and len(nums) == len(angulos):
-            candela_values.append(nums)
+            print(f"\n✅ Archivo: {archivo}")
+            print(f"📏 Ángulos verticales: {nv}")
+            print(f"🧭 Planos horizontales: {nh}")
+            print(f"🔸 Flujo útil: {round(flujo_util, 2)} lm")
+            print(f"🔸 Flujo total: {flujo_total} lm")
+            print(f"🔹 CU real calculado: {round(cu, 3)}")
 
-    if angulos and candela_values:
-        angulos = np.array(angulos)
-        longitudes = [len(row) for row in candela_values]
-        if len(set(longitudes)) == 1:
-            candelas = np.mean(np.array(candela_values), axis=0)
-        else:
-            candelas = np.array(candela_values[0])
-
-        n = min(len(angulos), len(candelas))
-        ang_rad = np.radians(angulos[:n])
-        flujo_util = np.trapz(candelas[:n] * np.sin(ang_rad) * 2 * np.pi * np.cos(ang_rad), ang_rad)
-        if flujo_real_extraido:
-            flujo_total = flujo_real_extraido
-            cu_resultado = flujo_util / flujo_total
-        else:
-            flujo_total = flujo_util * 1.2
-            cu_resultado = round(flujo_util / flujo_total, 3)
-
-        st.success(f"📊 CU calculado desde .IES: {round(cu_resultado, 3)}")
-        st.info(f"📤 Flujo luminoso estimado de la luminaria: {round(flujo_total)} lm")
-
-# === Alturas y dimensiones del recinto ===
-st.header("📏 Dimensiones del recinto")
-largo = st.number_input("Largo (m)", 1.0, value=5.0)
-ancho = st.number_input("Ancho (m)", 1.0, value=4.0)
-h_montaje = st.number_input("Altura de montaje (m)", 1.0, value=3.0)
-h_trabajo = st.number_input("Altura del plano de trabajo (m)", 0.0, value=0.8)
-
-# === Factor de mantenimiento ===
-st.header("🛠 Factor de Mantenimiento (FM)")
-cat_opciones = {
-    "I - Sin aberturas": "I",
-    "II - 15% luz arriba / rejillas": "II",
-    "III - <15% arriba / rejillas o reflectores": "III",
-    "IV - Opaca + translúcida con aberturas": "IV",
-    "V - Opaca translúcida sin aberturas": "V",
-    "VI - Opaca cerrada": "VI"
-}
-condiciones = ["Muy limpio", "Limpio", "Medio limpio", "Sucio", "Muy sucio"]
-categorias = ["I", "II", "III", "IV", "V", "VI"]
-tabla_A = [
-    [0.038, 0.071, 0.111, 0.162, 0.301],
-    [0.033, 0.068, 0.102, 0.147, 0.188],
-    [0.079, 0.106, 0.143, 0.184, 0.236],
-    [0.070, 0.131, 0.214, 0.314, 0.452],
-    [0.078, 0.128, 0.190, 0.249, 0.321],
-    [0.076, 0.145, 0.218, 0.284, 0.396]
-]
-tabla_B = [0.69, 0.62, 0.70, 0.72, 0.83, 0.88]
-
-cat_legible = st.selectbox("Categoría de luminaria", list(cat_opciones.keys()))
-cat = cat_opciones[cat_legible]
-cond = st.selectbox("Condición del ambiente", condiciones)
-tiempo_meses = st.number_input("Tiempo de operación (meses)", min_value=1.0, value=12.0)
-t = tiempo_meses / 12
-idx_cat = categorias.index(cat)
-idx_cond = condiciones.index(cond)
-A = tabla_A[idx_cat][idx_cond]
-B = tabla_B[idx_cat]
-FM = round(math.exp(-A * (t ** B)), 3)
-st.success(f"✅ FM: {FM}")
-
-# === Cálculo de número de luminarias ===
-st.header("📊 Cálculo final")
-if cu_resultado is not None and flujo_total is not None:
-    area = largo * ancho
-    lux_req = st.number_input("Lux requeridos", 50, value=300)
-    n_luminarias = math.ceil((area * lux_req) / (flujo_total * cu_resultado * FM))
-    st.write(f"💡 Luminarias necesarias: **{n_luminarias}**")
-
-    n_disp = st.number_input("Luminarias disponibles", 1, value=n_luminarias)
-    lux_resultante = round((n_disp * flujo_total * cu_resultado * FM) / area, 2)
-    st.write(f"🔦 Lux resultantes: **{lux_resultante} lux**")
+        except Exception as e:
+            print(f"❌ Error al procesar el archivo .IES: {e}")
