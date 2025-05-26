@@ -5,12 +5,13 @@ import io
 import math
 
 st.set_page_config(page_title="Calculadora de CU", page_icon="🔆", layout="centered")
-st.title("🔆 Calculadora de Luminarias mediante archivos .IES")
+st.title("🔆 Calculadora de CU desde archivo .IES")
 
 st.markdown("""
 ## 📝 Introducción
 El diseño de sistemas de iluminación eficientes y normativamente correctos es esencial en cualquier entorno laboral o educativo. Esta herramienta permite calcular el **Coeficiente de Utilización (CU)** a partir de archivos **.IES**, además de estimar el número de luminarias necesarias conforme a la **NOM-025-STPS-2008**. 
 
+La aplicación también integra parámetros como la altura de montaje, altura del plano de trabajo, área a iluminar y el **factor de mantenimiento (FM)** basado en condiciones de operación, para proporcionar una estimación precisa y profesional.
 
 ## 🎯 Objetivo
 Brindar una herramienta práctica y precisa desarrollada por **alumnos de 8º semestre de Ingeniería Eléctrica del ITSH** para facilitar el diseño de sistemas de iluminación.
