@@ -1,20 +1,17 @@
 import numpy as np
-import matplotlib.pyplot as plt
+import streamlit as st
 
-print("\U0001F527 Suba el archivo .IES para calcular el CU")
+st.set_page_config(page_title="Calculadora de CU", page_icon="🔆")
+st.title("🔆 Calculadora de CU desde archivo .IES")
 
-# === Leer archivo .IES ===
-def leer_ies(nombre_archivo):
-    with open(nombre_archivo, 'r', encoding='latin1') as f:
-        lines = f.readlines()
+st.markdown("### 📎 Suba un archivo .IES")
+uploaded_file = st.file_uploader("", type="ies")
 
-    metadata = []
-    data_lines = []
-    for line in lines:
-        if line.strip().startswith('TILT'):
-            tilt_index = lines.index(line)
-            metadata = lines[:tilt_index + 1]
-            data_lines = lines[tilt_index + 1:]
+def leer_ies(file):
+    lines = file.read().decode('latin1').splitlines()
+    for i, line in enumerate(lines):
+        if line.strip().startswith("TILT"):
+            data_lines = lines[i+1:]
             break
 
     header = data_lines[0].strip().split()
@@ -43,50 +40,35 @@ def leer_ies(nombre_archivo):
 
     expected_vals = num_ang_horiz * num_ang_vert
     if len(candela_vals) != expected_vals:
-        print(f"\u26a0\ufe0f Aviso: se esperaban {expected_vals} candelas, pero se encontraron {len(candela_vals)}")
+        st.warning(f"⚠ Aviso: se esperaban {expected_vals} candelas, pero se encontraron {len(candela_vals)}")
         if len(candela_vals) % num_ang_vert == 0:
             num_ang_horiz = len(candela_vals) // num_ang_vert
-            print(f"\U0001f501 Ajustando número de planos horizontales a {num_ang_horiz}")
         elif len(candela_vals) % num_ang_horiz == 0:
             num_ang_vert = len(candela_vals) // num_ang_horiz
-            print(f"\U0001f501 Ajustando número de ángulos verticales a {num_ang_vert}")
         else:
-            raise ValueError("La cantidad de candelas no coincide con los ángulos especificados.")
+            raise ValueError("Dimensiones incompatibles.")
 
     C = np.array(candela_vals).reshape((num_ang_horiz, num_ang_vert))
     theta_vals = np.array(angulo_vert[:num_ang_vert])
     return C, theta_vals, flujo_total, num_ang_horiz, num_ang_vert
 
-
-# === Calcular CU ===
 def calcular_cu(C, theta_vals, flujo_total):
-    mask = theta_vals <= 90
-    theta_rad = np.radians(theta_vals[mask])
-    I_avg = np.mean(C, axis=0)[mask]
-
-    from numpy import trapz
-    flujo_util = trapz(I_avg * np.sin(theta_rad) * 2 * np.pi * np.cos(theta_rad), theta_rad)
+    theta_rad = np.radians(theta_vals[theta_vals <= 90])
+    I_avg = np.mean(C, axis=0)[theta_vals <= 90]
+    flujo_util = np.trapz(I_avg * np.sin(theta_rad) * 2 * np.pi * np.cos(theta_rad), theta_rad)
     CU = flujo_util / flujo_total
     return CU, flujo_util
 
+if uploaded_file:
+    try:
+        C, theta, flujo_total, nh, nv = leer_ies(uploaded_file)
+        cu, flujo_util = calcular_cu(C, theta, flujo_total)
 
-# === Ejecución ===
-if __name__ == "__main__":
-    import sys
-    if len(sys.argv) < 2:
-        print("\u2757 Error: Proporcione el nombre del archivo .IES como argumento.")
-    else:
-        archivo = sys.argv[1]
-        try:
-            C, theta, flujo_total, nh, nv = leer_ies(archivo)
-            cu, flujo_util = calcular_cu(C, theta, flujo_total)
-
-            print(f"\n\u2705 Archivo: {archivo}")
-            print(f"\U0001f4cf Ángulos verticales: {nv}")
-            print(f"\U0001f9ed Planos horizontales: {nh}")
-            print(f"\U0001f538 Flujo útil: {round(flujo_util, 2)} lm")
-            print(f"\U0001f538 Flujo total: {flujo_total} lm")
-            print(f"\U0001f539 CU real calculado: {round(cu, 3)}")
-
-        except Exception as e:
-            print(f"\u274c Error al procesar el archivo .IES: {e}")
+        st.success("✅ Archivo procesado")
+        st.markdown(f"- Ángulos verticales: {nv}")
+        st.markdown(f"- Planos horizontales: {nh}")
+        st.markdown(f"- Flujo útil: {round(flujo_util, 1)} lm")
+        st.markdown(f"- Flujo total: {flujo_total} lm")
+        st.markdown(f"- CU real calculado: {round(cu, 3)}")
+    except Exception as e:
+        st.error(f"❌ Error: {e}")
