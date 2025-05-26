@@ -17,54 +17,51 @@ if archivo:
     flujo_real_extraido = None
     leyendo_angulos = False
     leyendo_candelas = False
-    num_angular_secciones = 0
 
+    # Extraer flujo desde línea estructurada tipo IESNA
     for line in lines:
-        if any(etq in line.upper() for etq in ["[LUMINAIRE]", "[MORE]", "[OTHER]", "TILT", "[LAMP]", "[LUMCAT]"]):
-            continue
-
-        if flujo_real_extraido is None and any(x in line.lower() for x in ["lumens", "lumen"]):
-            for word in line.split():
+        if flujo_real_extraido is None:
+            partes = line.strip().split()
+            if len(partes) >= 2:
                 try:
-                    lumens = float(word)
-                    if lumens > 100:
-                        flujo_real_extraido = lumens
+                    if float(partes[1]) > 100:
+                        flujo_real_extraido = float(partes[1])
                         break
                 except:
                     continue
 
-        valores = line.strip().split()
-        try:
-            nums = [float(x) for x in valores]
-        except:
-            continue
+    vertical_angles = []
+    horizontal_angles = []
+    candela_values = []
+    for idx, line in enumerate(lines):
+        if "TILT=NONE" in line:
+            try:
+                info = lines[idx + 1].split()
+                num_lamps = int(info[0])
+                flujo_total = float(info[1])
+                num_vertical = int(info[2])
+                num_horizontal = int(info[3])
+                vertical_angles = [float(x) for x in lines[idx + 4].split()]
+                horizontal_angles = [float(x) for x in lines[idx + 5].split()]
+                for i in range(num_horizontal):
+                    linea = lines[idx + 6 + i]
+                    datos = [float(x) for x in linea.split()]
+                    candela_values.append(datos)
+                break
+            except:
+                continue
 
-        if not angulos and all(0 <= x <= 180 for x in nums):
-            angulos += nums
-            leyendo_angulos = True
-        elif leyendo_angulos and len(nums) == len(angulos):
-            candelas.extend(nums)
-            leyendo_candelas = True
-        elif leyendo_candelas and len(nums) == len(angulos):
-            candelas.extend(nums)
-        elif leyendo_candelas and len(nums) != len(angulos):
-            continue
-
-    if angulos and candelas:
-        angulos = np.array(angulos)
-        candelas = np.array(candelas).reshape(-1)
-        n = min(len(angulos), len(candelas))
-        ang_rad = np.radians(angulos[:n])
-        flujo_util = np.trapz(candelas[:n] * np.sin(ang_rad) * 2 * np.pi * np.cos(ang_rad), ang_rad)
+    if vertical_angles and candela_values:
+        angulos = np.array(vertical_angles)
+        candelas = np.mean(np.array(candela_values), axis=0)  # Promedio por ángulo
+        ang_rad = np.radians(angulos)
+        flujo_util = np.trapz(candelas * np.sin(ang_rad) * 2 * np.pi * np.cos(ang_rad), ang_rad)
         if flujo_real_extraido:
             flujo_total = flujo_real_extraido
-            cu_resultado = flujo_util / flujo_total
-        else:
-            flujo_total = flujo_util * 1.2  # Supone que el flujo útil es el 85% del total para estimación técnica
-            cu_resultado = round(flujo_util / flujo_total, 3)
+        cu_resultado = round(flujo_util / flujo_total, 3)
 
         st.success(f"📊 CU calculado desde .IES: {round(cu_resultado, 3)}")
-        st.info(f"📤 Flujo luminoso estimado de la luminaria: {round(flujo_total)} lm")
+        st.info(f"📤 Flujo luminoso total declarado: {round(flujo_total)} lm")
 
 # === Alturas y dimensiones del recinto ===
 st.header("📏 Dimensiones del recinto")
