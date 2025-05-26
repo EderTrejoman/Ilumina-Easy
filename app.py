@@ -7,6 +7,19 @@ st.title("🔆 Calculadora de CU desde archivo .IES")
 st.markdown("### 📎 Suba un archivo .IES")
 uploaded_file = st.file_uploader("", type="ies")
 
+st.markdown("""
+*ℹ Información para el usuario:*
+
+- *Altura del plano de trabajo (hrc):* distancia del piso a la superficie donde se realiza la tarea (ej. escritorio, mesa), normalmente *0.80 m*.
+- *Altura de montaje (hcc):* distancia desde el piso hasta el centro de la luminaria instalada en el techo.
+- *Altura efectiva (hfc):* diferencia entre hcc y hrc, representa la altura útil para los cálculos de iluminación.
+""")
+
+hcc = st.number_input("Altura de montaje (hcc) [m]", min_value=0.0, value=2.5, step=0.1)
+hrc = st.number_input("Altura del plano de trabajo (hrc) [m]", min_value=0.0, value=0.8, step=0.1)
+hfc = hcc - hrc
+st.markdown(f"*Altura efectiva (hfc):* {hfc:.2f} m")
+
 def leer_ies(file):
     lines = file.read().decode('latin1').splitlines()
     for i, line in enumerate(lines):
@@ -53,8 +66,9 @@ def leer_ies(file):
     return C, theta_vals, flujo_total, num_ang_horiz, num_ang_vert
 
 def calcular_cu(C, theta_vals, flujo_total):
-    theta_rad = np.radians(theta_vals[theta_vals <= 90])
-    I_avg = np.mean(C, axis=0)[theta_vals <= 90]
+    mask = theta_vals <= 90
+    theta_rad = np.radians(theta_vals[mask])
+    I_avg = np.mean(C, axis=0)[mask]
     flujo_util = np.trapz(I_avg * np.sin(theta_rad) * 2 * np.pi * np.cos(theta_rad), theta_rad)
     CU = flujo_util / flujo_total
     return CU, flujo_util
@@ -69,6 +83,21 @@ if uploaded_file:
         st.markdown(f"- Planos horizontales: {nh}")
         st.markdown(f"- Flujo útil: {round(flujo_util, 1)} lm")
         st.markdown(f"- Flujo total: {flujo_total} lm")
-        st.markdown(f"- CU real calculado: {round(cu, 3)}")
+        st.markdown(f"- CU real calculado: *{round(cu, 3)}*")
+
+        st.markdown("---")
+        st.markdown("### 📐 Dimensiones del área a iluminar")
+
+        largo = st.number_input("Largo del área (m)", min_value=0.0, value=6.0, step=0.1)
+        ancho = st.number_input("Ancho del área (m)", min_value=0.0, value=6.0, step=0.1)
+        area = largo * ancho
+        st.markdown(f"*Área total:* {area:.2f} m²")
+
+        nivel_lux = st.number_input("Nivel de iluminación requerido (lux)", min_value=0, value=300, step=10)
+        FM = st.number_input("Factor de mantenimiento (FM)", min_value=0.1, max_value=1.0, value=0.9, step=0.05)
+
+        num_luminarias = (nivel_lux * area) / (cu * flujo_total * FM)
+        st.markdown(f"### 🔢 Luminarias necesarias: *{round(num_luminarias, 1)}*")
+
     except Exception as e:
-        st.error(f"❌ Error: {e}")
+        st.error(f"❌ Error al procesar el archivo .IES: {e}")
