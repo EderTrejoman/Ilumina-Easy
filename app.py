@@ -5,7 +5,7 @@ import io
 import math
 
 st.set_page_config(page_title="Calculadora de CU", page_icon="🔆", layout="centered")
-st.title("🔆 Calculadora de CU desde archivo .IES")
+st.title("🔆 Calculadora de Luminarias mediante archivos .IES")
 
 st.markdown("""
 ## 📝 Introducción
