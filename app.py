@@ -15,7 +15,9 @@ if archivo:
     angulos = []
     candelas = []
     flujo_real_extraido = None
+    leyendo_angulos = False
     leyendo_candelas = False
+    num_angular_secciones = 0
 
     for line in lines:
         if any(etq in line.upper() for etq in ["[LUMINAIRE]", "[MORE]", "[OTHER]", "TILT", "[LAMP]", "[LUMCAT]"]):
@@ -39,8 +41,14 @@ if archivo:
 
         if not angulos and all(0 <= x <= 180 for x in nums):
             angulos += nums
-        elif angulos and len(nums) == len(angulos):
-            candelas += nums
+            leyendo_angulos = True
+        elif leyendo_angulos and len(nums) == len(angulos):
+            candelas.extend(nums)
+            leyendo_candelas = True
+        elif leyendo_candelas and len(nums) == len(angulos):
+            candelas.extend(nums)
+        elif leyendo_candelas and len(nums) != len(angulos):
+            continue
 
     if angulos and candelas:
         angulos = np.array(angulos)
