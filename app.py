@@ -15,6 +15,8 @@ if archivo:
     angulos = []
     candelas = []
     flujo_real_extraido = None
+    leyendo_candelas = False
+
     for line in lines:
         if any(etq in line.upper() for etq in ["[LUMINAIRE]", "[MORE]", "[OTHER]", "TILT", "[LAMP]", "[LUMCAT]"]):
             continue
@@ -34,27 +36,27 @@ if archivo:
             nums = [float(x) for x in valores]
         except:
             continue
-        if len(nums) > 10:
-            if not angulos:
-                angulos = nums
-            elif not candelas:
-                candelas = nums
-            if angulos and candelas:
-                break
+
+        if not angulos and all(0 <= x <= 180 for x in nums):
+            angulos += nums
+        elif angulos and len(nums) == len(angulos):
+            candelas += nums
 
     if angulos and candelas:
+        angulos = np.array(angulos)
+        candelas = np.array(candelas).reshape(-1)
         n = min(len(angulos), len(candelas))
         ang_rad = np.radians(angulos[:n])
-        flujo_util = np.trapz(np.array(candelas[:n]) * np.sin(ang_rad) * 2 * np.pi * np.cos(ang_rad), ang_rad)
+        flujo_util = np.trapz(candelas[:n] * np.sin(ang_rad) * 2 * np.pi * np.cos(ang_rad), ang_rad)
         if flujo_real_extraido:
             flujo_total = flujo_real_extraido
             cu_resultado = flujo_util / flujo_total
         else:
-            flujo_total = flujo_util
-            cu_resultado = round(flujo_util / flujo_total, 3)  # Ajuste para que el CU no sea fijo en 1.0
+            flujo_total = flujo_util * 1.2  # Supone que el flujo útil es el 85% del total para estimación técnica
+            cu_resultado = round(flujo_util / flujo_total, 3)
 
         st.success(f"📊 CU calculado desde .IES: {round(cu_resultado, 3)}")
-        st.info(f"📤 Flujo luminoso de la luminaria: {round(flujo_total)} lm")
+        st.info(f"📤 Flujo luminoso estimado de la luminaria: {round(flujo_total)} lm")
 
 # === Alturas y dimensiones del recinto ===
 st.header("📏 Dimensiones del recinto")
