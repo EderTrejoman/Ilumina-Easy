@@ -7,6 +7,14 @@ import math
 st.set_page_config(page_title="Calculadora de CU", page_icon="🔆", layout="centered")
 st.title("🔆 Calculadora de CU desde archivo .IES")
 
+st.markdown("""
+## 📝 Introducción
+Esta aplicación permite calcular el **Coeficiente de Utilización (CU)** y estimar el número de luminarias necesarias con base en la **NOM-025-STPS-2008**, utilizando archivos fotométricos en formato **.IES**.
+
+## 🎯 Objetivo
+Brindar una herramienta práctica y precisa desarrollada por **alumnos de 8º semestre de Ingeniería Eléctrica del ITSH** para facilitar el diseño de sistemas de iluminación.
+""")
+
 st.markdown("### 📎 Suba un archivo .IES")
 uploaded_file = st.file_uploader("", type="ies")
 
@@ -151,6 +159,10 @@ if uploaded_file is not None:
 
         num_luminarias = (nivel_lux * area) / (cu * flujo_total * FM)
         st.markdown(f"### 🔢 Luminarias necesarias: **{round(num_luminarias, 1)}**")
+
+        st.markdown("---")
+        st.markdown("### 📊 Niveles de Iluminación según la NOM-025-STPS-2008")
+        st.dataframe({"Área": list(niveles_nom.keys()), "Nivel de Iluminación (lux)": list(niveles_nom.values())})
 
     except Exception as e:
         st.error(f"❌ Error al procesar el archivo .IES: {e}")
