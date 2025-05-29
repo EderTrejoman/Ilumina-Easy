@@ -4,8 +4,8 @@ import streamlit as st
 import io
 import math
 
-st.set_page_config(page_title="Calculadora de CU", page_icon="🔆", layout="centered")
-st.title("🔆 Calculadora de CU desde archivo .IES")
+st.set_page_config(page_title="Calculadora de Luminarias", page_icon="🔆", layout="centered")
+st.title("🔆 Calculadora de lumminsrias mediante archivos .IES")
 
 st.markdown("""
 ## 📝 Introducción
